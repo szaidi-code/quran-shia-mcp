@@ -245,7 +245,17 @@ class MCPHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url_path = urllib.parse.urlparse(self.path).path
-        if url_path == "/" or url_path == "/health":
+        if url_path in ("/", "/documentation"):
+            html_file = Path(__file__).parent / "index.html"
+            if html_file.exists():
+                self.send_response(200)
+                self._set_cors_headers()
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(html_file.read_bytes())
+                return
+
+        if url_path == "/health":
             self.send_response(200)
             self._set_cors_headers()
             self.send_header("Content-Type", "application/json")
@@ -257,7 +267,8 @@ class MCPHandler(BaseHTTPRequestHandler):
                 "tools": [t["name"] for t in TOOLS],
                 "endpoints": {
                     "mcp_rpc": "/mcp",
-                    "sse": "/sse"
+                    "sse": "/sse",
+                    "docs": "/documentation"
                 }
             }
             self.wfile.write(json.dumps(resp, indent=2).encode("utf-8"))
