@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: quran-mcp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quran-shia-mcp
+  namespace: quran-mcp
+  labels:
+    app: quran-shia-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quran-shia-mcp
+  template:
+    metadata:
+      labels:
+        app: quran-shia-mcp
+    spec:
+      containers:
+      - name: mcp-server
+        image: quran-shia-mcp:v1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: PORT
+          value: "8080"
+        - name: HOST
+          value: "0.0.0.0"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 2
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quran-shia-mcp
+  namespace: quran-mcp
+spec:
+  type: ClusterIP
+  selector:
+    app: quran-shia-mcp
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http

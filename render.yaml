@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: quran-shia-mcp
+    runtime: python
+    buildCommand: "python3 builder.py"
+    startCommand: "python3 server.py"
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: DB_PATH
+        value: quran_shia.db
+    healthCheckPath: /health
