@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 """
-Loader and validator for Allama Syed Zeeshan Haider Jawadi's Urdu Quran translation
-from Tanzil.net (data/tanzil/ur.jawadi.txt).
+Loader and validator for:
+1. Allama Syed Zeeshan Haider Jawadi's Urdu Quran translation (data/tanzil/ur.jawadi.txt)
+2. Tanzil Simple Arabic Quran Text v1.1 (data/tanzil/quran-simple.sql)
 
 Licensing & Attribution:
-- Source: Tanzil.net (https://tanzil.net/trans/ur.jawadi)
-- License: Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported
-- Verbatim text only; non-commercial use with attribution to https://tanzil.net/trans/
+- Jawadi Translation: Tanzil.net (https://tanzil.net/trans/ur.jawadi), CC BY-NC-ND 3.0
+- Arabic Quran Text: Tanzil Project (https://tanzil.net), CC BY 3.0
+- Verbatim text only; no modifications allowed.
 """
+import re
 import sqlite3
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
 DB_PATH = BASE_DIR / "quran_shia.db"
 DATA_PATH = BASE_DIR / "data" / "tanzil" / "ur.jawadi.txt"
+ARABIC_SQL_PATH = BASE_DIR / "data" / "tanzil" / "quran-simple.sql"
 
 ATTRIBUTION = {
     "id": "ur.jawadi",
@@ -24,6 +27,15 @@ ATTRIBUTION = {
     "source_url": "https://tanzil.net/trans/ur.jawadi",
     "terms_url": "https://tanzil.net/trans/",
     "license": "CC BY-NC-ND 3.0 (Non-commercial only; verbatim text with attribution to Tanzil.net)",
+}
+
+ARABIC_ATTRIBUTION = {
+    "id": "quran-simple",
+    "name": "Tanzil Quran Text (Simple, Version 1.1)",
+    "source": "Tanzil Project",
+    "source_url": "https://tanzil.net",
+    "updates_url": "http://tanzil.net/updates/",
+    "license": "Creative Commons Attribution 3.0 (Verbatim copy; changing text is not allowed)",
 }
 
 AYAH_COUNTS = {
@@ -104,10 +116,89 @@ def parse_and_validate(data_path=DATA_PATH):
     return rows
 
 
+def parse_and_validate_arabic_sql(sql_path=ARABIC_SQL_PATH):
+    """
+    Parses data/tanzil/quran-simple.sql verbatim and validates that all 6,236 Arabic
+    verses across surahs 1..114 are present without modification.
+    """
+    path = Path(sql_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Tanzil Arabic SQL file not found: {path}")
+
+    raw_content = path.read_text(encoding="utf-8")
+    rows = []
+    seen = set()
+
+    for m in re.finditer(r"\((\d+),\s*(\d+),\s*(\d+),\s*'([^']*)'\)", raw_content):
+        surah = int(m.group(2))
+        ayah = int(m.group(3))
+        text = m.group(4)
+        if not text:
+            raise ValueError(f"Empty Arabic text at {surah}:{ayah}")
+        validate_surah_ayah(surah, ayah)
+        verse_key = f"{surah}:{ayah}"
+        if verse_key in seen:
+            raise ValueError(f"Duplicate Arabic verse {verse_key} in {path}")
+        seen.add(verse_key)
+        rows.append((verse_key, surah, ayah, text))
+
+    if len(rows) != TOTAL_AYAHS:
+        raise ValueError(f"Expected {TOTAL_AYAHS} Arabic ayahs in {path}, found {len(rows)}")
+
+    for s, count in AYAH_COUNTS.items():
+        for a in range(1, count + 1):
+            vk = f"{s}:{a}"
+            if vk not in seen:
+                raise ValueError(f"Missing expected Arabic verse {vk} in {path}")
+
+    return rows
+
+
+def load_arabic(conn=None, db_path=DB_PATH, sql_path=ARABIC_SQL_PATH):
+    """
+    Validates quran-simple.sql and (re)creates the quran_text_tanzil table.
+    Returns the number of loaded rows (6236).
+    """
+    if not Path(sql_path).exists():
+        return 0
+    rows = parse_and_validate_arabic_sql(sql_path)
+    own_conn = False
+    if conn is None:
+        conn = sqlite3.connect(db_path)
+        own_conn = True
+
+    try:
+        cur = conn.cursor()
+        cur.execute("DROP TABLE IF EXISTS quran_text_tanzil")
+        cur.execute(
+            """
+            CREATE TABLE quran_text_tanzil (
+                verse_key TEXT PRIMARY KEY,
+                surah INTEGER NOT NULL,
+                ayah INTEGER NOT NULL,
+                text TEXT NOT NULL
+            )
+            """
+        )
+        cur.execute(
+            "CREATE INDEX idx_quran_text_tanzil_surah_ayah ON quran_text_tanzil(surah, ayah)"
+        )
+        cur.executemany(
+            "INSERT INTO quran_text_tanzil (verse_key, surah, ayah, text) VALUES (?, ?, ?, ?)",
+            rows,
+        )
+        conn.commit()
+        return len(rows)
+    finally:
+        if own_conn:
+            conn.close()
+
+
 def load(conn=None, db_path=DB_PATH, data_path=DATA_PATH):
     """
-    Validates ur.jawadi.txt and (re)creates the translation_jawadi table.
-    Returns the number of loaded rows (6236).
+    Validates ur.jawadi.txt (and quran-simple.sql if present) and (re)creates
+    the translation_jawadi (and quran_text_tanzil) tables.
+    Returns the number of loaded Jawadi rows (6236).
     """
     rows = parse_and_validate(data_path)
     own_conn = False
@@ -136,6 +227,7 @@ def load(conn=None, db_path=DB_PATH, data_path=DATA_PATH):
             rows,
         )
         conn.commit()
+        load_arabic(conn=conn, db_path=db_path)
         return len(rows)
     finally:
         if own_conn:
@@ -144,8 +236,8 @@ def load(conn=None, db_path=DB_PATH, data_path=DATA_PATH):
 
 def ensure_loaded(conn=None, db_path=DB_PATH, data_path=DATA_PATH):
     """
-    Ensures translation_jawadi exists and contains all 6,236 verses;
-    loads from data/tanzil/ur.jawadi.txt if missing or incomplete.
+    Ensures translation_jawadi and quran_text_tanzil exist and contain all 6,236 verses;
+    loads from data/tanzil/ if missing or incomplete.
     """
     own_conn = False
     if conn is None:
@@ -154,6 +246,16 @@ def ensure_loaded(conn=None, db_path=DB_PATH, data_path=DATA_PATH):
 
     try:
         cur = conn.cursor()
+        cur.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='quran_text_tanzil'"
+        )
+        has_ar = False
+        if cur.fetchone():
+            cur.execute("SELECT COUNT(*) FROM quran_text_tanzil")
+            has_ar = cur.fetchone()[0] == TOTAL_AYAHS
+        if not has_ar and ARABIC_SQL_PATH.exists():
+            load_arabic(conn=conn, db_path=db_path)
+
         cur.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='translation_jawadi'"
         )
@@ -170,4 +272,4 @@ def ensure_loaded(conn=None, db_path=DB_PATH, data_path=DATA_PATH):
 
 if __name__ == "__main__":
     loaded = load()
-    print(f"Loaded {loaded} verses into translation_jawadi.")
+    print(f"Loaded {loaded} verses into translation_jawadi and quran_text_tanzil.")
