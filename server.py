@@ -18,16 +18,22 @@ import uuid
 import os
 
 import builder
+import jawadi_loader
 
 DB_PATH = Path(os.environ.get("DB_PATH", Path(__file__).parent / "quran_shia.db"))
 PORT = int(os.environ.get("PORT", 8080))
 HOST = os.environ.get("HOST", "0.0.0.0")
+VERSION = "1.2.0"
 SUPPORTED_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
 
 TOOLS = [
     {
         "name": "fetch_translation",
-        "description": "Fetch Quranic verses with Arabic text and Urdu/English translations from Balagh ul Quran (Allama Sheikh Mohsin Ali Najafi) and Tafseer e Namoona (Maulana Syed Safdar Hussain Najafi).",
+        "description": (
+            "Fetch Quranic verses with Arabic text and Urdu/English translations from "
+            "Balagh ul Quran (Allama Sheikh Mohsin Ali Najafi), Tafseer e Namoona "
+            "(Maulana Syed Safdar Hussain Najafi), and Allama Syed Zeeshan Haider Jawadi (Tanzil.net)."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -35,7 +41,7 @@ TOOLS = [
                 "ayah": {"type": "integer", "description": "Optional specific Ayah number"},
                 "edition": {
                     "type": "string",
-                    "enum": ["all", "balagh", "namoona"],
+                    "enum": ["all", "balagh", "namoona", "jawadi"],
                     "description": "Translation source (default: 'all')",
                     "default": "all"
                 }
@@ -63,12 +69,16 @@ TOOLS = [
     },
     {
         "name": "search_verses",
-        "description": "Search for keywords across Arabic text, Balagh ul Quran, Tafseer e Namoona translations, footnotes, and Tafseer commentary.",
+        "description": "Search for keywords across Arabic text, Balagh ul Quran, Tafseer e Namoona, Allama Jawadi translations, footnotes, and Tafseer commentary.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Search keyword (Arabic, Urdu, or English)"},
-                "edition": {"type": "string", "enum": ["all", "balagh", "namoona"], "default": "all"}
+                "edition": {
+                    "type": "string",
+                    "enum": ["all", "balagh", "namoona", "jawadi"],
+                    "default": "all"
+                }
             },
             "required": ["query"]
         }
@@ -96,6 +106,11 @@ def _clean_html(raw):
 
 def _ensure_surah_cached(conn, surah):
     cur = conn.cursor()
+    cur.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='verses'"
+    )
+    if not cur.fetchone():
+        return
     cur.execute("SELECT COUNT(*) FROM verses WHERE surah = ?", (surah,))
     if cur.fetchone()[0] > 0:
         return
@@ -152,78 +167,140 @@ def execute_tool(name, args):
         cur = conn.cursor()
 
         if name == "list_surahs":
-            cur.execute("SELECT id, name_ar, name_en, ayah_count FROM surahs ORDER BY id ASC")
-            rows = cur.fetchall()
+            cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='surahs'"
+            )
+            rows = []
+            if cur.fetchone():
+                cur.execute("SELECT id, name_ar, name_en, ayah_count FROM surahs ORDER BY id ASC")
+                rows = cur.fetchall()
+            if len(rows) == 114:
+                return {
+                    "count": len(rows),
+                    "surahs": [
+                        {
+                            "surah": r["id"],
+                            "name_ar": r["name_ar"],
+                            "name_en": r["name_en"],
+                            "ayah_count": r["ayah_count"]
+                        }
+                        for r in rows
+                    ]
+                }
             return {
-                "count": len(rows),
+                "count": 114,
                 "surahs": [
-                    {
-                        "surah": r["id"],
-                        "name_ar": r["name_ar"],
-                        "name_en": r["name_en"],
-                        "ayah_count": r["ayah_count"]
-                    }
-                    for r in rows
+                    {"surah": s, "name_ar": "", "name_en": f"Surah {s}", "ayah_count": c}
+                    for s, c in jawadi_loader.AYAH_COUNTS.items()
                 ]
             }
 
         elif name == "fetch_translation":
             surah = int(args.get("surah", 1))
-            ayah = args.get("ayah")
+            ayah_raw = args.get("ayah")
+            ayah = int(ayah_raw) if ayah_raw is not None else None
             edition = args.get("edition", "all")
+            if edition not in ("all", "balagh", "namoona", "jawadi"):
+                raise ValueError(f"Invalid edition '{edition}': must be one of 'all', 'balagh', 'namoona', 'jawadi'.")
 
-            _ensure_surah_cached(conn, surah)
+            jawadi_loader.validate_surah_ayah(surah, ayah)
 
-            cur.execute("SELECT name_ar, name_en, ayah_count FROM surahs WHERE id = ?", (surah,))
-            srow = cur.fetchone()
+            if edition in ("all", "jawadi"):
+                jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
 
-            if ayah is not None:
-                cur.execute("SELECT * FROM verses WHERE surah = ? AND ayah = ?", (surah, int(ayah)))
+            # edition == "jawadi" intentionally skips live scraping
+            if edition != "jawadi":
+                _ensure_surah_cached(conn, surah)
+
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='verses'")
+            has_verses_table = bool(cur.fetchone())
+
+            jawadi_map = {}
+            if edition in ("all", "jawadi"):
+                if ayah is not None:
+                    cur.execute(
+                        "SELECT ayah, text FROM translation_jawadi WHERE surah = ? AND ayah = ?",
+                        (surah, ayah),
+                    )
+                else:
+                    cur.execute(
+                        "SELECT ayah, text FROM translation_jawadi WHERE surah = ? ORDER BY ayah ASC",
+                        (surah,),
+                    )
+                for jrow in cur.fetchall():
+                    jawadi_map[jrow["ayah"]] = jrow["text"]
+
+            v_map = {}
+            if has_verses_table:
+                if ayah is not None:
+                    cur.execute("SELECT * FROM verses WHERE surah = ? AND ayah = ?", (surah, ayah))
+                else:
+                    cur.execute("SELECT * FROM verses WHERE surah = ? ORDER BY ayah ASC", (surah,))
+                for r in cur.fetchall():
+                    v_map[r["ayah"]] = r
+
+            if edition == "jawadi":
+                ayah_nums = sorted(jawadi_map.keys())
+            elif edition == "all":
+                ayah_nums = sorted(set(v_map.keys()) | set(jawadi_map.keys()))
             else:
-                cur.execute("SELECT * FROM verses WHERE surah = ? ORDER BY ayah ASC", (surah,))
+                ayah_nums = sorted(v_map.keys())
 
-            rows = cur.fetchall()
             results = []
-            for r in rows:
+            for a in ayah_nums:
+                r = v_map.get(a)
                 entry = {
-                    "verse_key": r["verse_key"],
-                    "surah": r["surah"],
-                    "ayah": r["ayah"],
-                    "arabic": r["arabic"],
-                    "english": r["trans_en"]
+                    "verse_key": f"{surah}:{a}",
+                    "surah": surah,
+                    "ayah": a,
+                    "arabic": r["arabic"] if r else "",
+                    "english": r["trans_en"] if r else ""
                 }
-                if edition in ("all", "balagh"):
+                if edition in ("all", "balagh") and r:
                     entry["translation_balagh"] = r["trans_balagh"]
                     if r["footnotes_balagh"]:
                         entry["footnotes_balagh"] = r["footnotes_balagh"]
-                if edition in ("all", "namoona"):
+                if edition in ("all", "namoona") and r:
                     entry["translation_namoona"] = r["trans_namoona"]
+                if edition in ("all", "jawadi") and a in jawadi_map:
+                    entry["translation_jawadi"] = jawadi_map[a]
                 results.append(entry)
 
-            return {
+            resp = {
                 "surah": surah,
-                "name_ar": srow["name_ar"] if srow else "",
-                "name_en": srow["name_en"] if srow else "",
                 "count": len(results),
                 "verses": results
             }
+            if edition in ("all", "jawadi"):
+                resp["sources"] = {"jawadi": jawadi_loader.ATTRIBUTION}
+            return resp
 
         elif name == "fetch_tafseer":
             surah = int(args.get("surah", 1))
             ayah = int(args.get("ayah", 1))
-            source = args.get("source", "all")
+            source = args.get("source", "kauthar")
 
+            jawadi_loader.validate_surah_ayah(surah, ayah)
+            jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
             _ensure_surah_cached(conn, surah)
+
             cur.execute("SELECT * FROM verses WHERE surah = ? AND ayah = ?", (surah, ayah))
             row = cur.fetchone()
             if not row:
                 return {"error": f"Verse {surah}:{ayah} not found in database."}
+
+            cur.execute(
+                "SELECT text FROM translation_jawadi WHERE surah = ? AND ayah = ?",
+                (surah, ayah),
+            )
+            jrow = cur.fetchone()
 
             res = {
                 "verse_key": f"{surah}:{ayah}",
                 "arabic": row["arabic"],
                 "translation_balagh": row["trans_balagh"],
                 "translation_namoona": row["trans_namoona"],
+                "translation_jawadi": jrow["text"] if jrow else "",
                 "english": row["trans_en"]
             }
             if source in ("all", "kauthar"):
@@ -232,54 +309,106 @@ def execute_tool(name, args):
                     "author": "Allama Sheikh Mohsin Ali Najafi",
                     "source_url": f"https://www.balaghulquran.com/tafseer.php?sno={surah}&ano={surah:03d}{ayah:03d}",
                     "footnotes": row["footnotes_balagh"] or "",
-                    "content": k_text or row["footnotes_balagh"] or "No separate extended entry; see translation and footnotes."
+                    "content": k_text or row["footnotes_balagh"] or "No detailed commentary entry."
                 }
             if source in ("all", "namoona"):
                 res["tafseer_e_namoona"] = {
-                    "author": "Grand Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi",
+                    "author": "Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi",
                     "source_url": f"https://www.tafseerenamoona.net/surahs/{surah}#ayah-{ayah}",
                     "translation": row["trans_namoona"],
                     "content": row["tafseer_namoona"] or row["trans_namoona"] or "Available in online edition."
                 }
+            if jrow:
+                res["sources"] = {"jawadi": jawadi_loader.ATTRIBUTION}
             return res
 
         elif name == "search_verses":
             query = args.get("query", "").strip()
             edition = args.get("edition", "all")
+            if edition not in ("all", "balagh", "namoona", "jawadi"):
+                raise ValueError(f"Invalid edition '{edition}': must be one of 'all', 'balagh', 'namoona', 'jawadi'.")
+
+            if not query:
+                return {"query": query, "match_count": 0, "matches": []}
+
+            if edition in ("all", "jawadi"):
+                jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
+
             pattern = f"%{query}%"
-
-            cur.execute(
-                """
-                SELECT surah, ayah, verse_key, arabic, trans_balagh, trans_namoona, trans_en, footnotes_balagh
-                FROM verses
-                WHERE arabic LIKE ? OR trans_balagh LIKE ? OR trans_namoona LIKE ? OR trans_en LIKE ?
-                   OR footnotes_balagh LIKE ? OR tafseer_namoona LIKE ? OR tafseer_kauthar LIKE ?
-                ORDER BY surah ASC, ayah ASC
-                LIMIT 25
-                """,
-                (pattern, pattern, pattern, pattern, pattern, pattern, pattern),
-            )
-
-            rows = cur.fetchall()
             matches = []
-            for r in rows:
-                item = {
-                    "verse_key": r["verse_key"],
-                    "arabic": r["arabic"],
-                    "english": r["trans_en"]
-                }
-                if edition in ("all", "balagh"):
-                    item["balagh"] = r["trans_balagh"]
-                    if r["footnotes_balagh"]:
-                        item["footnotes_balagh"] = r["footnotes_balagh"]
-                if edition in ("all", "namoona"):
-                    item["namoona"] = r["trans_namoona"]
-                matches.append(item)
-            return {
+
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='verses'")
+            has_verses_table = bool(cur.fetchone())
+
+            if edition == "jawadi":
+                if has_verses_table:
+                    cur.execute(
+                        """
+                        SELECT j.verse_key, j.surah, j.ayah, j.text AS trans_jawadi,
+                               v.arabic, v.trans_en
+                        FROM translation_jawadi j
+                        LEFT JOIN verses v ON v.verse_key = j.verse_key
+                        WHERE j.text LIKE ? OR v.arabic LIKE ? OR v.trans_en LIKE ?
+                        ORDER BY j.surah ASC, j.ayah ASC
+                        LIMIT 20
+                        """,
+                        (pattern, pattern, pattern),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT verse_key, surah, ayah, text AS trans_jawadi,
+                               '' AS arabic, '' AS trans_en
+                        FROM translation_jawadi
+                        WHERE text LIKE ?
+                        ORDER BY surah ASC, ayah ASC
+                        LIMIT 20
+                        """,
+                        (pattern,),
+                    )
+                for r in cur.fetchall():
+                    matches.append({
+                        "verse_key": r["verse_key"],
+                        "arabic": r["arabic"] or "",
+                        "jawadi": r["trans_jawadi"],
+                        "english": r["trans_en"] or ""
+                    })
+            elif has_verses_table:
+                cur.execute(
+                    """
+                    SELECT v.surah, v.ayah, v.verse_key, v.arabic,
+                           v.trans_balagh, v.trans_namoona, v.trans_en,
+                           j.text AS trans_jawadi
+                    FROM verses v
+                    LEFT JOIN translation_jawadi j ON j.verse_key = v.verse_key
+                    WHERE v.arabic LIKE ? OR v.trans_balagh LIKE ? OR v.trans_namoona LIKE ?
+                       OR v.trans_en LIKE ? OR j.text LIKE ?
+                       OR v.footnotes_balagh LIKE ? OR v.tafseer_namoona LIKE ? OR v.tafseer_kauthar LIKE ?
+                    ORDER BY v.surah ASC, v.ayah ASC
+                    LIMIT 20
+                    """,
+                    (pattern, pattern, pattern, pattern, pattern, pattern, pattern, pattern),
+                )
+                for r in cur.fetchall():
+                    item = {
+                        "verse_key": r["verse_key"],
+                        "arabic": r["arabic"],
+                        "balagh": r["trans_balagh"],
+                        "namoona": r["trans_namoona"],
+                        "english": r["trans_en"]
+                    }
+                    if edition in ("all", "jawadi") and r["trans_jawadi"]:
+                        item["jawadi"] = r["trans_jawadi"]
+                    matches.append(item)
+
+            resp = {
                 "query": query,
                 "match_count": len(matches),
                 "matches": matches
             }
+            if edition in ("all", "jawadi"):
+                resp["sources"] = {"jawadi": jawadi_loader.ATTRIBUTION}
+            return resp
 
         else:
             raise ValueError(f"Tool {name} not found")
@@ -310,7 +439,7 @@ def handle_single_rpc(req):
                 },
                 "serverInfo": {
                     "name": "quran-shia-mcp",
-                    "version": "2.0.0"
+                    "version": VERSION
                 }
             }
         }
@@ -442,6 +571,7 @@ class MCPHandler(BaseHTTPRequestHandler):
         if url_path == "/health":
             surah_count = 0
             verse_count = 0
+            jawadi_count = 0
             try:
                 conn = get_db()
                 cur = conn.cursor()
@@ -449,6 +579,8 @@ class MCPHandler(BaseHTTPRequestHandler):
                 surah_count = cur.fetchone()[0]
                 cur.execute("SELECT COUNT(*) FROM verses")
                 verse_count = cur.fetchone()[0]
+                cur.execute("SELECT COUNT(*) FROM translation_jawadi")
+                jawadi_count = cur.fetchone()[0]
                 conn.close()
             except Exception:
                 pass
@@ -460,10 +592,11 @@ class MCPHandler(BaseHTTPRequestHandler):
             resp = {
                 "status": "healthy",
                 "service": "quran-shia-mcp",
-                "version": "2.0.0",
+                "version": VERSION,
                 "database": {
                     "surahs": surah_count,
-                    "verses": verse_count
+                    "verses": verse_count,
+                    "jawadi_verses": jawadi_count
                 },
                 "tools": [t["name"] for t in TOOLS],
                 "endpoints": {
@@ -516,7 +649,8 @@ class MCPHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    print(f"Starting Shia Quran MCP Server v2.0.0 on http://{HOST}:{PORT}")
+    jawadi_loader.ensure_loaded(db_path=DB_PATH)
+    print(f"Starting Shia Quran MCP Server v{VERSION} on http://{HOST}:{PORT}")
     server = ThreadingHTTPServer((HOST, PORT), MCPHandler)
     try:
         server.serve_forever()

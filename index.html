@@ -454,7 +454,7 @@
 <nav class="nav-header">
   <a href="/" class="nav-brand">
     <span>SHIA QURAN MCP</span>
-    <span class="nav-badge" id="status-badge">v2.0.0 • 114 Surahs Live</span>
+    <span class="nav-badge" id="status-badge">v1.2.0 • 114 Surahs Live</span>
   </a>
   <div class="nav-links">
     <a onclick="activateTab('explorer')">Live Explorer</a>
@@ -468,15 +468,15 @@
 
 <div class="hero">
   <div class="hero-eyebrow">Model Context Protocol Server</div>
-  <h1>Scholarly Shia Quran & Tafseer</h1>
+  <h1>Scholarly Shia Quran &amp; Tafseer</h1>
   <p class="hero-desc">
-    Complete 114-Surah (6,236-verse) Arabic text, verified Urdu &amp; English translations, and classical Shia commentaries streamed directly into Claude, ChatGPT, Cursor, and Antigravity. Powered by <em>Balagh ul Quran &amp; Tafseer al-Kauthar</em> (Allama Sheikh Mohsin Ali Najafi) and <em>Tafseer e Namoona</em> (Grand Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi).
+    Complete 114-Surah (6,236-verse) Arabic text, verified Urdu &amp; English translations, and classical Shia commentaries streamed directly into Claude, ChatGPT, Cursor, and Antigravity. Powered by <em>Allama Syed Zeeshan Haider Jawadi</em> (<a href="https://tanzil.net/trans/ur.jawadi" target="_blank" style="color:var(--gold-light);">Tanzil.net</a>), <em>Balagh ul Quran &amp; Tafseer al-Kauthar</em> (Allama Sheikh Mohsin Ali Najafi), and <em>Tafseer e Namoona</em> (Grand Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi).
   </p>
 
   <div class="stats-row">
     <div class="stat-pill">Surahs Indexed: <strong id="stat-surahs">114 / 114</strong></div>
     <div class="stat-pill">Verses Indexed: <strong id="stat-verses">6,236</strong></div>
-    <div class="stat-pill">Commentaries: <strong>Al-Kauthar &amp; Namoona</strong></div>
+    <div class="stat-pill">Editions: <strong>Jawadi • Balagh • Namoona</strong></div>
   </div>
 
   <div class="endpoint-pill-box">
@@ -626,8 +626,8 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
         <tbody>
           <tr>
             <td><code>fetch_translation</code></td>
-            <td><code>surah</code> (1–114), <code>ayah</code> (optional int), <code>edition</code> ("all" | "balagh" | "namoona")</td>
-            <td>Returns Arabic text with Balagh ul Quran (Sheikh Mohsin Ali Najafi), Tafseer e Namoona (Safdar Najfi), English translations, and footnotes.</td>
+            <td><code>surah</code> (1–114), <code>ayah</code> (optional int), <code>edition</code> ("all" | "balagh" | "namoona" | "jawadi")</td>
+            <td>Returns Arabic text with Allama Jawadi (<a href="https://tanzil.net/trans/ur.jawadi" target="_blank" style="color:var(--cyan);">Tanzil.net</a>), Balagh ul Quran (Sheikh Mohsin Ali Najafi), Tafseer e Namoona (Safdar Najfi), English translations, and footnotes.</td>
           </tr>
           <tr>
             <td><code>fetch_tafseer</code></td>
@@ -636,8 +636,8 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
           </tr>
           <tr>
             <td><code>search_verses</code></td>
-            <td><code>query</code> (str), <code>edition</code> ("all" | "balagh" | "namoona")</td>
-            <td>Full-text search across Arabic text, Urdu/English translations, footnotes, and Tafseer commentary across all 114 Surahs.</td>
+            <td><code>query</code> (str), <code>edition</code> ("all" | "balagh" | "namoona" | "jawadi")</td>
+            <td>Full-text search across Arabic text, Urdu/English translations (including Allama Jawadi), footnotes, and Tafseer commentary across all 114 Surahs.</td>
           </tr>
           <tr>
             <td><code>list_surahs</code></td>
@@ -646,6 +646,9 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
           </tr>
         </tbody>
       </table>
+      <p style="margin-top:16px;font-size:12.5px;color:var(--text-muted);">
+        <strong>Attribution &amp; Terms:</strong> Allama Syed Zeeshan Haider Jawadi's Urdu translation (<code>ur.jawadi</code>) is provided verbatim from <a href="https://tanzil.net/trans/ur.jawadi" target="_blank" style="color:var(--gold-light);">Tanzil.net</a> under <a href="https://tanzil.net/trans/" target="_blank" style="color:var(--gold-light);">CC BY-NC-ND 3.0</a> (non-commercial use only with attribution).
+      </p>
     </div>
   </div>
 </div>
@@ -730,6 +733,10 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
           <span style="color:var(--text-muted);font-size:12px;">Live MCP Response</span>
         </div>
         <div class="arabic-text">${escapeHtml(res.arabic)}</div>
+        <div style="margin-bottom:12px;">
+          <div class="tafseer-badge">Allama Syed Zeeshan Haider Jawadi (Tanzil.net)</div>
+          <div class="urdu-text">${escapeHtml(res.translation_jawadi)}</div>
+        </div>
         <div style="margin-bottom:12px;">
           <div class="tafseer-badge">Balagh ul Quran (Allama Sheikh Mohsin Ali Najafi)</div>
           <div class="urdu-text">${escapeHtml(res.translation_balagh)}</div>

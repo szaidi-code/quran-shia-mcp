@@ -22,6 +22,8 @@ import time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import jawadi_loader
+
 DB_PATH = Path(__file__).parent / "quran_shia.db"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
 
@@ -243,9 +245,21 @@ def fetch_balagh_tafseer(surah=1, ayah=1):
 
 
 def fetch_complete_surah(surah_num):
-    sdata = fetch_namoona_surah(surah_num)
+    try:
+        sdata = fetch_namoona_surah(surah_num)
+    except Exception:
+        sdata = {
+            "id": surah_num,
+            "name_ar": "",
+            "name_en": f"Surah {surah_num}",
+            "ayah_count": jawadi_loader.AYAH_COUNTS.get(surah_num, 0),
+            "ayahs": {},
+        }
     ayah_count = sdata["ayah_count"]
-    balagh_map = fetch_balagh_surah(surah_num, ayah_count)
+    try:
+        balagh_map = fetch_balagh_surah(surah_num, ayah_count)
+    except Exception:
+        balagh_map = {}
     kauthar_map = {}
     if surah_num == 1:
         kauthar_map[1] = fetch_balagh_tafseer(1, 1)
@@ -258,7 +272,13 @@ def fetch_complete_surah(surah_num):
 def main():
     force_rebuild = "--rebuild" in sys.argv or "--force" in sys.argv
     if not force_rebuild and is_db_complete(DB_PATH):
-        print(f"Database {DB_PATH} already contains all 114 Surahs (6,236+ verses). Skipping rebuild.")
+        conn = sqlite3.connect(DB_PATH)
+        j_count = jawadi_loader.ensure_loaded(conn)
+        conn.close()
+        print(
+            f"Database {DB_PATH} already contains all 114 Surahs (6,236+ verses) "
+            f"and {j_count} Jawadi verses. Skipping rebuild."
+        )
         return
 
     print(f"Building full 114-Surah Shia Quran & Tafseer database at {DB_PATH}...")
@@ -344,6 +364,10 @@ def main():
                 flush=True,
             )
 
+    print("Loading Allama Syed Zeeshan Haider Jawadi translation (ur.jawadi)...")
+    j_count = jawadi_loader.load(conn)
+    print(f"Loaded {j_count} Jawadi translation verses.")
+
     cur.execute("PRAGMA journal_mode=DELETE")
     cur.execute("VACUUM")
     conn.commit()
@@ -351,7 +375,7 @@ def main():
     size_mb = DB_PATH.stat().st_size / (1024 * 1024)
     print(
         f"Completed in {time.time() - t_start:.1f}s! "
-        f"All 114 Surahs ({total_verses} verses) stored in {DB_PATH} ({size_mb:.2f} MB)."
+        f"All 114 Surahs ({total_verses} verses + {j_count} Jawadi verses) stored in {DB_PATH} ({size_mb:.2f} MB)."
     )
 
 
