@@ -204,9 +204,7 @@ def execute_tool(name, args):
                 raise ValueError(f"Invalid edition '{edition}': must be one of 'all', 'balagh', 'namoona', 'jawadi'.")
 
             jawadi_loader.validate_surah_ayah(surah, ayah)
-
-            if edition in ("all", "jawadi"):
-                jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
+            jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
 
             # edition == "jawadi" intentionally skips live scraping
             if edition != "jawadi":
@@ -214,6 +212,23 @@ def execute_tool(name, args):
 
             cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='verses'")
             has_verses_table = bool(cur.fetchone())
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quran_text_tanzil'")
+            has_arabic_table = bool(cur.fetchone())
+
+            arabic_map = {}
+            if has_arabic_table:
+                if ayah is not None:
+                    cur.execute(
+                        "SELECT ayah, text FROM quran_text_tanzil WHERE surah = ? AND ayah = ?",
+                        (surah, ayah),
+                    )
+                else:
+                    cur.execute(
+                        "SELECT ayah, text FROM quran_text_tanzil WHERE surah = ? ORDER BY ayah ASC",
+                        (surah,),
+                    )
+                for arow in cur.fetchall():
+                    arabic_map[arow["ayah"]] = arow["text"]
 
             jawadi_map = {}
             if edition in ("all", "jawadi"):
@@ -242,7 +257,7 @@ def execute_tool(name, args):
             if edition == "jawadi":
                 ayah_nums = sorted(jawadi_map.keys())
             elif edition == "all":
-                ayah_nums = sorted(set(v_map.keys()) | set(jawadi_map.keys()))
+                ayah_nums = sorted(set(v_map.keys()) | set(jawadi_map.keys()) | set(arabic_map.keys()))
             else:
                 ayah_nums = sorted(v_map.keys())
 
@@ -253,7 +268,7 @@ def execute_tool(name, args):
                     "verse_key": f"{surah}:{a}",
                     "surah": surah,
                     "ayah": a,
-                    "arabic": r["arabic"] if r else "",
+                    "arabic": (r["arabic"] if (r and r["arabic"]) else arabic_map.get(a, "")),
                     "english": r["trans_en"] if r else ""
                 }
                 if edition in ("all", "balagh") and r:
@@ -271,8 +286,13 @@ def execute_tool(name, args):
                 "count": len(results),
                 "verses": results
             }
+            sources = {}
+            if has_arabic_table:
+                sources["arabic"] = jawadi_loader.ARABIC_ATTRIBUTION
             if edition in ("all", "jawadi"):
-                resp["sources"] = {"jawadi": jawadi_loader.ATTRIBUTION}
+                sources["jawadi"] = jawadi_loader.ATTRIBUTION
+            if sources:
+                resp["sources"] = sources
             return resp
 
         elif name == "fetch_tafseer":
@@ -295,9 +315,15 @@ def execute_tool(name, args):
             )
             jrow = cur.fetchone()
 
+            cur.execute(
+                "SELECT text FROM quran_text_tanzil WHERE surah = ? AND ayah = ?",
+                (surah, ayah),
+            )
+            arow = cur.fetchone()
+
             res = {
                 "verse_key": f"{surah}:{ayah}",
-                "arabic": row["arabic"],
+                "arabic": row["arabic"] or (arow["text"] if arow else ""),
                 "translation_balagh": row["trans_balagh"],
                 "translation_namoona": row["trans_namoona"],
                 "translation_jawadi": jrow["text"] if jrow else "",
@@ -318,8 +344,10 @@ def execute_tool(name, args):
                     "translation": row["trans_namoona"],
                     "content": row["tafseer_namoona"] or row["trans_namoona"] or "Available in online edition."
                 }
+            sources = {"arabic": jawadi_loader.ARABIC_ATTRIBUTION}
             if jrow:
-                res["sources"] = {"jawadi": jawadi_loader.ATTRIBUTION}
+                sources["jawadi"] = jawadi_loader.ATTRIBUTION
+            res["sources"] = sources
             return res
 
         elif name == "search_verses":
@@ -331,8 +359,7 @@ def execute_tool(name, args):
             if not query:
                 return {"query": query, "match_count": 0, "matches": []}
 
-            if edition in ("all", "jawadi"):
-                jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
+            jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
 
             pattern = f"%{query}%"
             matches = []
@@ -345,26 +372,29 @@ def execute_tool(name, args):
                     cur.execute(
                         """
                         SELECT j.verse_key, j.surah, j.ayah, j.text AS trans_jawadi,
-                               v.arabic, v.trans_en
+                               COALESCE(NULLIF(v.arabic, ''), q.text, '') AS arabic,
+                               COALESCE(v.trans_en, '') AS trans_en
                         FROM translation_jawadi j
+                        LEFT JOIN quran_text_tanzil q ON q.verse_key = j.verse_key
                         LEFT JOIN verses v ON v.verse_key = j.verse_key
-                        WHERE j.text LIKE ? OR v.arabic LIKE ? OR v.trans_en LIKE ?
+                        WHERE j.text LIKE ? OR q.text LIKE ? OR v.arabic LIKE ? OR v.trans_en LIKE ?
                         ORDER BY j.surah ASC, j.ayah ASC
                         LIMIT 20
                         """,
-                        (pattern, pattern, pattern),
+                        (pattern, pattern, pattern, pattern),
                     )
                 else:
                     cur.execute(
                         """
-                        SELECT verse_key, surah, ayah, text AS trans_jawadi,
-                               '' AS arabic, '' AS trans_en
-                        FROM translation_jawadi
-                        WHERE text LIKE ?
-                        ORDER BY surah ASC, ayah ASC
+                        SELECT j.verse_key, j.surah, j.ayah, j.text AS trans_jawadi,
+                               COALESCE(q.text, '') AS arabic, '' AS trans_en
+                        FROM translation_jawadi j
+                        LEFT JOIN quran_text_tanzil q ON q.verse_key = j.verse_key
+                        WHERE j.text LIKE ? OR q.text LIKE ?
+                        ORDER BY j.surah ASC, j.ayah ASC
                         LIMIT 20
                         """,
-                        (pattern,),
+                        (pattern, pattern),
                     )
                 for r in cur.fetchall():
                     matches.append({
@@ -376,18 +406,20 @@ def execute_tool(name, args):
             elif has_verses_table:
                 cur.execute(
                     """
-                    SELECT v.surah, v.ayah, v.verse_key, v.arabic,
+                    SELECT v.surah, v.ayah, v.verse_key,
+                           COALESCE(NULLIF(v.arabic, ''), q.text, '') AS arabic,
                            v.trans_balagh, v.trans_namoona, v.trans_en,
                            j.text AS trans_jawadi
                     FROM verses v
+                    LEFT JOIN quran_text_tanzil q ON q.verse_key = v.verse_key
                     LEFT JOIN translation_jawadi j ON j.verse_key = v.verse_key
-                    WHERE v.arabic LIKE ? OR v.trans_balagh LIKE ? OR v.trans_namoona LIKE ?
+                    WHERE v.arabic LIKE ? OR q.text LIKE ? OR v.trans_balagh LIKE ? OR v.trans_namoona LIKE ?
                        OR v.trans_en LIKE ? OR j.text LIKE ?
                        OR v.footnotes_balagh LIKE ? OR v.tafseer_namoona LIKE ? OR v.tafseer_kauthar LIKE ?
                     ORDER BY v.surah ASC, v.ayah ASC
                     LIMIT 20
                     """,
-                    (pattern, pattern, pattern, pattern, pattern, pattern, pattern, pattern),
+                    (pattern, pattern, pattern, pattern, pattern, pattern, pattern, pattern, pattern),
                 )
                 for r in cur.fetchall():
                     item = {
@@ -406,8 +438,10 @@ def execute_tool(name, args):
                 "match_count": len(matches),
                 "matches": matches
             }
+            sources = {"arabic": jawadi_loader.ARABIC_ATTRIBUTION}
             if edition in ("all", "jawadi"):
-                resp["sources"] = {"jawadi": jawadi_loader.ATTRIBUTION}
+                sources["jawadi"] = jawadi_loader.ATTRIBUTION
+            resp["sources"] = sources
             return resp
 
         else:
