@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Shia Quran & Tafseer HTTP / SSE MCP Server
-Supports both JSON-RPC via HTTP POST and Server-Sent Events (SSE).
+Supports both JSON-RPC via HTTP POST (Streamable HTTP) and Server-Sent Events (SSE).
 Zero external dependencies (uses standard library http.server and sqlite3).
 Ready for Render, Fly.io, and Kubernetes.
 """
@@ -16,6 +16,8 @@ import re
 import html
 import uuid
 import os
+
+import builder
 
 DB_PATH = Path(os.environ.get("DB_PATH", Path(__file__).parent / "quran_shia.db"))
 PORT = int(os.environ.get("PORT", 8080))
@@ -52,8 +54,8 @@ TOOLS = [
                 "source": {
                     "type": "string",
                     "enum": ["kauthar", "namoona", "all"],
-                    "description": "Tafseer work to query (default: 'kauthar')",
-                    "default": "kauthar"
+                    "description": "Tafseer work to query (default: 'all')",
+                    "default": "all"
                 }
             },
             "required": ["surah", "ayah"]
@@ -61,7 +63,7 @@ TOOLS = [
     },
     {
         "name": "search_verses",
-        "description": "Search for keywords across Arabic text, Balagh ul Quran, or Tafseer e Namoona translations.",
+        "description": "Search for keywords across Arabic text, Balagh ul Quran, Tafseer e Namoona translations, footnotes, and Tafseer commentary.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -70,18 +72,27 @@ TOOLS = [
             },
             "required": ["query"]
         }
+    },
+    {
+        "name": "list_surahs",
+        "description": "List all 114 Surahs of the Holy Quran with Arabic name, English name, and total verse (ayah) count.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
     }
 ]
 
+
 def get_db():
-    conn = sqlite3.connect(DB_PATH, timeout=15)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     conn.row_factory = sqlite3.Row
     return conn
 
+
 def _clean_html(raw):
-    if not raw:
-        return ""
-    return html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+    return builder.clean_html(raw)
+
 
 def _ensure_surah_cached(conn, surah):
     cur = conn.cursor()
@@ -89,62 +100,38 @@ def _ensure_surah_cached(conn, surah):
     if cur.fetchone()[0] > 0:
         return
     try:
-        url_b = f"https://www.balaghulquran.com/index.php?sno={surah}"
-        req_b = urllib.request.Request(url_b, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req_b, timeout=15) as resp:
-            content_b = resp.read().decode("utf-8", errors="replace")
-        blocks = re.split(r'<div class="row mb-lg-6" id="(\d{6})">', content_b)
-        balagh_data = {}
-        for i in range(1, len(blocks), 2):
-            vid = blocks[i]
-            chunk = blocks[i + 1].split("<footer")[0]
-            ar_m = re.search(r'<p[^>]*class="[^"]*txtArabicQuran[^"]*"[^>]*>(.*?)</p>', chunk, re.S)
-            ur_m = re.search(r'<p[^>]*class="[^"]*txtUrduQuran\b[^"]*"[^>]*>(.*?)</p>', chunk, re.S)
-            notes = re.findall(r'<p[^>]*class="[^"]*txtUrdu fu-medium-lh[^"]*"[^>]*>(.*?)</p>', chunk, re.S)
-            ayah_num = int(vid[3:])
-            balagh_data[ayah_num] = {
-                "arabic": _clean_html(ar_m.group(1)) if ar_m else "",
-                "trans_balagh": _clean_html(ur_m.group(1)) if ur_m else "",
-                "footnotes": "\n".join([_clean_html(n) for n in notes if _clean_html(n)])
-            }
+        sdata, balagh_map, kauthar_map = builder.fetch_complete_surah(surah)
+        ayah_count = sdata["ayah_count"]
+        cur.execute(
+            "INSERT OR REPLACE INTO surahs (id, name_ar, name_en, ayah_count) VALUES (?, ?, ?, ?)",
+            (surah, sdata["name_ar"], sdata["name_en"], ayah_count),
+        )
+        for a in range(1, ayah_count + 1):
+            n = sdata["ayahs"].get(a, {})
+            b = balagh_map.get(a, {})
+            cur.execute(
+                """
+                INSERT OR REPLACE INTO verses
+                (surah, ayah, verse_key, arabic, trans_balagh, trans_namoona, trans_en, footnotes_balagh, tafseer_kauthar, tafseer_namoona)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    surah,
+                    a,
+                    f"{surah}:{a}",
+                    n.get("arabic") or b.get("arabic") or "",
+                    b.get("trans_balagh") or n.get("trans_balagh") or "",
+                    n.get("trans_namoona") or "",
+                    n.get("trans_en") or "",
+                    b.get("footnotes") or "",
+                    kauthar_map.get(a, ""),
+                    n.get("tafseer_namoona") or "",
+                ),
+            )
+        conn.commit()
     except Exception:
-        balagh_data = {}
+        pass
 
-    try:
-        url_n = f"https://www.tafseerenamoona.net/surahs/{surah}"
-        req_n = urllib.request.Request(url_n, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req_n, timeout=15) as resp:
-            page_n = resp.read().decode("utf-8", errors="replace")
-        safdars = re.findall(r'translation_safdar_najfi\\":\\"(.*?)\\"', page_n)
-        yusufs = re.findall(r'translation_en\\":\\"(.*?)\\"', page_n)
-        namoona_data = {}
-        for i, s in enumerate(safdars):
-            namoona_data[i + 1] = {
-                "trans_namoona": html.unescape(s.strip()),
-                "trans_en": html.unescape(yusufs[i].strip()) if i < len(yusufs) else ""
-            }
-    except Exception:
-        namoona_data = {}
-
-    max_ayah = max(list(balagh_data.keys()) + list(namoona_data.keys()) + [0])
-    for a in range(1, max_ayah + 1):
-        b = balagh_data.get(a, {})
-        n = namoona_data.get(a, {})
-        cur.execute("""
-        INSERT OR IGNORE INTO verses
-        (surah, ayah, verse_key, arabic, trans_balagh, trans_namoona, trans_en, footnotes_balagh, tafseer_kauthar, tafseer_namoona)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            surah, a, f"{surah}:{a}",
-            b.get("arabic", ""),
-            b.get("trans_balagh", ""),
-            n.get("trans_namoona", ""),
-            n.get("trans_en", ""),
-            b.get("footnotes", ""),
-            "",
-            ""
-        ))
-    conn.commit()
 
 def _ensure_kauthar_tafseer(conn, surah, ayah):
     cur = conn.cursor()
@@ -152,32 +139,43 @@ def _ensure_kauthar_tafseer(conn, surah, ayah):
     row = cur.fetchone()
     if row and row["tafseer_kauthar"]:
         return row["tafseer_kauthar"]
-    ano = f"{surah:03d}{ayah:03d}"
-    url = f"https://www.balaghulquran.com/tafseer.php?sno={surah}&ano={ano}"
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            content = resp.read().decode("utf-8", errors="replace")
-        paras = re.findall(r'<p class="lead fu-medium">(.*?)</p>', content, re.S)
-        text = "\n\n".join([_clean_html(p) for p in paras if _clean_html(p)])
-        if text:
-            cur.execute("UPDATE verses SET tafseer_kauthar = ? WHERE surah = ? AND ayah = ?", (text, surah, ayah))
-            conn.commit()
-        return text
-    except Exception:
-        return ""
+    text = builder.fetch_balagh_tafseer(surah, ayah)
+    if text:
+        cur.execute("UPDATE verses SET tafseer_kauthar = ? WHERE surah = ? AND ayah = ?", (text, surah, ayah))
+        conn.commit()
+    return text
+
 
 def execute_tool(name, args):
     conn = get_db()
     try:
         cur = conn.cursor()
 
-        if name == "fetch_translation":
+        if name == "list_surahs":
+            cur.execute("SELECT id, name_ar, name_en, ayah_count FROM surahs ORDER BY id ASC")
+            rows = cur.fetchall()
+            return {
+                "count": len(rows),
+                "surahs": [
+                    {
+                        "surah": r["id"],
+                        "name_ar": r["name_ar"],
+                        "name_en": r["name_en"],
+                        "ayah_count": r["ayah_count"]
+                    }
+                    for r in rows
+                ]
+            }
+
+        elif name == "fetch_translation":
             surah = int(args.get("surah", 1))
             ayah = args.get("ayah")
             edition = args.get("edition", "all")
 
             _ensure_surah_cached(conn, surah)
+
+            cur.execute("SELECT name_ar, name_en, ayah_count FROM surahs WHERE id = ?", (surah,))
+            srow = cur.fetchone()
 
             if ayah is not None:
                 cur.execute("SELECT * FROM verses WHERE surah = ? AND ayah = ?", (surah, int(ayah)))
@@ -204,6 +202,8 @@ def execute_tool(name, args):
 
             return {
                 "surah": surah,
+                "name_ar": srow["name_ar"] if srow else "",
+                "name_en": srow["name_en"] if srow else "",
                 "count": len(results),
                 "verses": results
             }
@@ -211,7 +211,7 @@ def execute_tool(name, args):
         elif name == "fetch_tafseer":
             surah = int(args.get("surah", 1))
             ayah = int(args.get("ayah", 1))
-            source = args.get("source", "kauthar")
+            source = args.get("source", "all")
 
             _ensure_surah_cached(conn, surah)
             cur.execute("SELECT * FROM verses WHERE surah = ? AND ayah = ?", (surah, ayah))
@@ -221,18 +221,23 @@ def execute_tool(name, args):
 
             res = {
                 "verse_key": f"{surah}:{ayah}",
-                "arabic": row["arabic"]
+                "arabic": row["arabic"],
+                "translation_balagh": row["trans_balagh"],
+                "translation_namoona": row["trans_namoona"],
+                "english": row["trans_en"]
             }
             if source in ("all", "kauthar"):
                 k_text = _ensure_kauthar_tafseer(conn, surah, ayah)
                 res["tafseer_al_kauthar"] = {
                     "author": "Allama Sheikh Mohsin Ali Najafi",
                     "source_url": f"https://www.balaghulquran.com/tafseer.php?sno={surah}&ano={surah:03d}{ayah:03d}",
-                    "content": k_text or row["footnotes_balagh"] or "No detailed commentary entry."
+                    "footnotes": row["footnotes_balagh"] or "",
+                    "content": k_text or row["footnotes_balagh"] or "No separate extended entry; see translation and footnotes."
                 }
             if source in ("all", "namoona"):
                 res["tafseer_e_namoona"] = {
-                    "author": "Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi",
+                    "author": "Grand Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi",
+                    "source_url": f"https://www.tafseerenamoona.net/surahs/{surah}#ayah-{ayah}",
                     "translation": row["trans_namoona"],
                     "content": row["tafseer_namoona"] or row["trans_namoona"] or "Available in online edition."
                 }
@@ -243,23 +248,33 @@ def execute_tool(name, args):
             edition = args.get("edition", "all")
             pattern = f"%{query}%"
 
-            cur.execute("""
-            SELECT surah, ayah, verse_key, arabic, trans_balagh, trans_namoona, trans_en
-            FROM verses
-            WHERE arabic LIKE ? OR trans_balagh LIKE ? OR trans_namoona LIKE ? OR trans_en LIKE ?
-            LIMIT 20
-            """, (pattern, pattern, pattern, pattern))
+            cur.execute(
+                """
+                SELECT surah, ayah, verse_key, arabic, trans_balagh, trans_namoona, trans_en, footnotes_balagh
+                FROM verses
+                WHERE arabic LIKE ? OR trans_balagh LIKE ? OR trans_namoona LIKE ? OR trans_en LIKE ?
+                   OR footnotes_balagh LIKE ? OR tafseer_namoona LIKE ? OR tafseer_kauthar LIKE ?
+                ORDER BY surah ASC, ayah ASC
+                LIMIT 25
+                """,
+                (pattern, pattern, pattern, pattern, pattern, pattern, pattern),
+            )
 
             rows = cur.fetchall()
             matches = []
             for r in rows:
-                matches.append({
+                item = {
                     "verse_key": r["verse_key"],
                     "arabic": r["arabic"],
-                    "balagh": r["trans_balagh"],
-                    "namoona": r["trans_namoona"],
                     "english": r["trans_en"]
-                })
+                }
+                if edition in ("all", "balagh"):
+                    item["balagh"] = r["trans_balagh"]
+                    if r["footnotes_balagh"]:
+                        item["footnotes_balagh"] = r["footnotes_balagh"]
+                if edition in ("all", "namoona"):
+                    item["namoona"] = r["trans_namoona"]
+                matches.append(item)
             return {
                 "query": query,
                 "match_count": len(matches),
@@ -271,12 +286,11 @@ def execute_tool(name, args):
     finally:
         conn.close()
 
+
 def handle_single_rpc(req):
     method = req.get("method", "")
     req_id = req.get("id")
 
-    # JSON-RPC notifications (e.g. notifications/initialized) do not have an id
-    # and must not return a JSON-RPC response object.
     if req_id is None or method.startswith("notifications/") or method == "initialized":
         return None
 
@@ -296,7 +310,7 @@ def handle_single_rpc(req):
                 },
                 "serverInfo": {
                     "name": "quran-shia-mcp",
-                    "version": "1.1.0"
+                    "version": "2.0.0"
                 }
             }
         }
@@ -360,6 +374,7 @@ def handle_single_rpc(req):
             "error": {"code": -32601, "message": f"Method {method} not implemented"}
         }
 
+
 def handle_rpc(body_str):
     parsed = json.loads(body_str)
     if isinstance(parsed, list):
@@ -370,6 +385,7 @@ def handle_rpc(body_str):
                 responses.append(res)
         return responses if responses else None
     return handle_single_rpc(parsed)
+
 
 class MCPHandler(BaseHTTPRequestHandler):
     def _set_cors_headers(self):
@@ -401,7 +417,6 @@ class MCPHandler(BaseHTTPRequestHandler):
         url_path = urllib.parse.urlparse(self.path).path
         accept = self.headers.get("Accept", "")
 
-        # If an MCP client sends GET with Accept: text/event-stream to /, /mcp, or /sse
         if url_path in ("/sse", "/mcp") or (url_path == "/" and "text/event-stream" in accept and "text/html" not in accept):
             self.send_response(200)
             self._set_cors_headers()
@@ -425,6 +440,19 @@ class MCPHandler(BaseHTTPRequestHandler):
                 return
 
         if url_path == "/health":
+            surah_count = 0
+            verse_count = 0
+            try:
+                conn = get_db()
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) FROM surahs")
+                surah_count = cur.fetchone()[0]
+                cur.execute("SELECT COUNT(*) FROM verses")
+                verse_count = cur.fetchone()[0]
+                conn.close()
+            except Exception:
+                pass
+
             self.send_response(200)
             self._set_cors_headers()
             self.send_header("Content-Type", "application/json")
@@ -432,7 +460,11 @@ class MCPHandler(BaseHTTPRequestHandler):
             resp = {
                 "status": "healthy",
                 "service": "quran-shia-mcp",
-                "version": "1.1.0",
+                "version": "2.0.0",
+                "database": {
+                    "surahs": surah_count,
+                    "verses": verse_count
+                },
                 "tools": [t["name"] for t in TOOLS],
                 "endpoints": {
                     "mcp_rpc": "/mcp",
@@ -465,7 +497,6 @@ class MCPHandler(BaseHTTPRequestHandler):
                 return
 
             if resp_dict is None:
-                # Notification (such as notifications/initialized): return 202 Accepted
                 self.send_response(202)
                 self._set_cors_headers()
                 self.send_header("Mcp-Session-Id", session_id)
@@ -483,14 +514,15 @@ class MCPHandler(BaseHTTPRequestHandler):
             self._set_cors_headers()
             self.end_headers()
 
+
 def main():
-    print(f"Starting Shia Quran MCP Server on http://{HOST}:{PORT}")
+    print(f"Starting Shia Quran MCP Server v2.0.0 on http://{HOST}:{PORT}")
     server = ThreadingHTTPServer((HOST, PORT), MCPHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
 
+
 if __name__ == "__main__":
     main()
-

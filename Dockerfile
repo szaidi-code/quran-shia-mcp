@@ -2,8 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy server, builder, and pre-indexed database
-COPY server.py builder.py quran_shia.db ./
+# Copy server, builder, documentation portal, and pre-indexed 114-Surah database
+COPY server.py builder.py index.html quran_shia.db ./
 
 ENV HOST=0.0.0.0
 ENV PORT=8080
