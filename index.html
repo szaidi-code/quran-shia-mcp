@@ -331,9 +331,9 @@
   </p>
 
   <div class="endpoint-pill-box">
-    <span class="endpoint-label">Hosted SSE URL</span>
-    <span class="endpoint-url" id="mcp-url">https://quran-shia-mcp.onrender.com/sse</span>
-    <button class="copy-btn" onclick="copyText('https://quran-shia-mcp.onrender.com/sse')">Copy URL</button>
+    <span class="endpoint-label">Hosted MCP URL</span>
+    <span class="endpoint-url" id="mcp-url">https://quran-shia-mcp.onrender.com/mcp</span>
+    <button class="copy-btn" onclick="copyText('https://quran-shia-mcp.onrender.com/mcp')">Copy URL</button>
   </div>
 </div>
 
@@ -354,11 +354,12 @@
       <ol class="step-list">
         <li>
           <strong>For Claude Web Connectors (Pro/Team):</strong>
-          Go to <code>Settings &gt; Connectors &gt; Add Custom MCP</code> (or paste the connector URL).
+          Go to <code>Settings &gt; Connectors &gt; Add custom connector</code>.
           <div class="code-block">
             <pre>Name: Shia Quran & Tafseer
-URL:  https://quran-shia-mcp.onrender.com/sse</pre>
+URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
           </div>
+          <em>Note: Because this is a public server with no OAuth login required, if Claude displays "Couldn't determine how this server signs in", click <strong>Continue anyway</strong> and leave authentication set to <strong>No sign in / None</strong>.</em>
         </li>
         <li>
           <strong>For Claude Desktop:</strong>
@@ -371,7 +372,7 @@ URL:  https://quran-shia-mcp.onrender.com/sse</pre>
             <pre id="claude-cfg">{
   "mcpServers": {
     "quran-shia": {
-      "url": "https://quran-shia-mcp.onrender.com/sse"
+      "url": "https://quran-shia-mcp.onrender.com/mcp"
     }
   }
 }</pre>
@@ -392,9 +393,9 @@ URL:  https://quran-shia-mcp.onrender.com/sse</pre>
         <li>Open <strong>ChatGPT &gt; Explore GPTs &gt; Create a GPT</strong> (or open your Developer MCP integrations).</li>
         <li>Under <strong>Actions</strong>, click <strong>Create new action</strong>.</li>
         <li>Set the Authentication to <strong>None</strong> (the server is open and rate-limited).</li>
-        <li>For MCP-compatible ChatGPT builds, provide the SSE endpoint:
+        <li>For MCP-compatible ChatGPT builds, provide the MCP endpoint:
           <div class="code-block">
-            <pre>https://quran-shia-mcp.onrender.com/sse</pre>
+            <pre>https://quran-shia-mcp.onrender.com/mcp</pre>
           </div>
         </li>
       </ol>
@@ -418,7 +419,7 @@ URL:  https://quran-shia-mcp.onrender.com/sse</pre>
             <pre id="cursor-cfg">{
   "mcpServers": {
     "quran-shia": {
-      "url": "https://quran-shia-mcp.onrender.com/sse"
+      "url": "https://quran-shia-mcp.onrender.com/mcp"
     }
   }
 }</pre>
