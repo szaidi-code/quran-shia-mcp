@@ -162,16 +162,16 @@ def fetch_namoona_surah(surah, retries=3):
                 else:
                     combined_tafseer = full_ur or full_en
 
-                en_yusuf = (a.get("translation_en_yusuf_ali") or a.get("translation_en") or "").strip()
-                en_shakir = (a.get("translation_en_shakir") or "").strip()
+                en_yusuf = clean_html(resolve(a.get("translation_en_yusuf_ali") or a.get("translation_en") or "")).strip()
+                en_shakir = clean_html(resolve(a.get("translation_en_shakir") or "")).strip()
                 trans_en = en_yusuf
                 if en_shakir and en_shakir != en_yusuf:
                     trans_en = f"{en_yusuf}\n[Shakir]: {en_shakir}" if en_yusuf else en_shakir
 
                 parsed_ayahs[anum] = {
-                    "arabic": (a.get("arabic") or "").strip(),
-                    "trans_balagh": (a.get("translation_mohsin_najfi") or a.get("translation") or "").strip(),
-                    "trans_namoona": (a.get("translation_safdar_najfi") or a.get("translation_ur") or "").strip(),
+                    "arabic": clean_html(resolve(a.get("arabic") or "")).strip(),
+                    "trans_balagh": clean_html(resolve(a.get("translation_mohsin_najfi") or a.get("translation") or "")).strip(),
+                    "trans_namoona": clean_html(resolve(a.get("translation_safdar_najfi") or a.get("translation_ur") or "")).strip(),
                     "trans_en": trans_en,
                     "tafseer_namoona": combined_tafseer,
                 }
@@ -269,15 +269,72 @@ def fetch_complete_surah(surah_num):
     return sdata, balagh_map, kauthar_map
 
 
+def repair_and_sync_db(conn):
+    """Ensures Tanzil Arabic & Jawadi tables are loaded, repairs any RSC pointer artifacts, and syncs verses.arabic."""
+    j_count = jawadi_loader.ensure_loaded(conn)
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='verses'")
+    if not cur.fetchone():
+        return j_count
+
+    # Repair any corrupted RSC pointer in 2:282 or missing 34:49 translation
+    cur.execute(
+        "SELECT surah, ayah FROM verses WHERE arabic LIKE '$%' OR trans_namoona LIKE '$%' OR trans_en LIKE '%$%' OR (surah = 34 AND ayah = 49 AND (trans_en IS NULL OR trans_en = ''))"
+    )
+    bad_rows = cur.fetchall()
+    for s_num, a_num in bad_rows:
+        try:
+            sdata = fetch_namoona_surah(s_num)
+            n = sdata.get("ayahs", {}).get(a_num, {})
+            if n:
+                cur.execute(
+                    """
+                    UPDATE verses
+                    SET arabic = COALESCE(NULLIF(?, ''), arabic),
+                        trans_namoona = COALESCE(NULLIF(?, ''), trans_namoona),
+                        trans_en = COALESCE(NULLIF(?, ''), trans_en)
+                    WHERE surah = ? AND ayah = ?
+                    """,
+                    (
+                        n.get("arabic", ""),
+                        n.get("trans_namoona", ""),
+                        n.get("trans_en", ""),
+                        s_num,
+                        a_num,
+                    ),
+                )
+        except Exception:
+            pass
+
+    # Synchronize all verses.arabic with canonical Tanzil Simple v1.1 text
+    cur.execute(
+        """
+        UPDATE verses
+        SET arabic = (
+            SELECT q.text FROM quran_text_tanzil q
+            WHERE q.surah = verses.surah AND q.ayah = verses.ayah
+        )
+        WHERE EXISTS (
+            SELECT 1 FROM quran_text_tanzil q
+            WHERE q.surah = verses.surah AND q.ayah = verses.ayah
+              AND q.text IS NOT NULL AND q.text != ''
+              AND verses.arabic != q.text
+        )
+        """
+    )
+    conn.commit()
+    return j_count
+
+
 def main():
     force_rebuild = "--rebuild" in sys.argv or "--force" in sys.argv
     if not force_rebuild and is_db_complete(DB_PATH):
         conn = sqlite3.connect(DB_PATH)
-        j_count = jawadi_loader.ensure_loaded(conn)
+        j_count = repair_and_sync_db(conn)
         conn.close()
         print(
             f"Database {DB_PATH} already contains all 114 Surahs (6,236+ verses) "
-            f"and {j_count} Jawadi verses. Skipping rebuild."
+            f"and {j_count} Jawadi verses (Arabic synced). Skipping rebuild."
         )
         return
 

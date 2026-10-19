@@ -26,13 +26,40 @@ HOST = os.environ.get("HOST", "0.0.0.0")
 VERSION = "1.2.0"
 SUPPORTED_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
 
+GROUNDING_NOTICE = (
+    "CRITICAL DISPLAY RULE: Always render the full verbatim 'arabic' verse text "
+    "(Tanzil Simple v1.1) prominently at the top of your response before presenting "
+    "translations or Tafseer commentary. Never omit, truncate, or paraphrase the Arabic text."
+)
+
 TOOLS = [
+    {
+        "name": "fetch_quran",
+        "description": (
+            "Fetch canonical verbatim Arabic Quran text (Tanzil Simple v1.1, 'quran-simple') "
+            "by Surah and optional Ayah or Ayah range (e.g. '24:55' or '2:255-257'). "
+            "IMPORTANT: Always display the returned 'arabic' text visibly to the user."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "surah": {"type": "integer", "description": "Surah number (1-114)"},
+                "ayah": {"type": "integer", "description": "Optional specific Ayah number"},
+                "ayahs": {
+                    "type": "string",
+                    "description": "Optional Ayah key or range (e.g. '55', '24:55', '1-7', or '2:255-257')"
+                }
+            },
+            "required": ["surah"]
+        }
+    },
     {
         "name": "fetch_translation",
         "description": (
-            "Fetch Quranic verses with Arabic text and Urdu/English translations from "
+            "Fetch Quranic verses with verbatim Tanzil Arabic text ('arabic') and Urdu/English translations from "
             "Balagh ul Quran (Allama Sheikh Mohsin Ali Najafi), Tafseer e Namoona "
-            "(Maulana Syed Safdar Hussain Najafi), and Allama Syed Zeeshan Haider Jawadi (Tanzil.net)."
+            "(Maulana Syed Safdar Hussain Najafi), and Allama Syed Zeeshan Haider Jawadi (Tanzil.net). "
+            "IMPORTANT: Always display the 'arabic' verse text visibly alongside the translation."
         ),
         "inputSchema": {
             "type": "object",
@@ -51,7 +78,12 @@ TOOLS = [
     },
     {
         "name": "fetch_tafseer",
-        "description": "Fetch detailed Quranic Tafseer commentaries from Al-Kauthar fi Tafsir al-Quran (Sheikh Mohsin Ali Najafi) or Tafseer e Namoona (Ayatollah Makarem Shirazi / Safdar Najfi).",
+        "description": (
+            "Fetch detailed Quranic Tafseer commentaries from Al-Kauthar fi Tafsir al-Quran "
+            "(Sheikh Mohsin Ali Najafi) or Tafseer e Namoona (Ayatollah Makarem Shirazi / Safdar Najfi), "
+            "including the canonical Arabic verse text ('arabic') and translations. "
+            "IMPORTANT: Always display the full 'arabic' verse text visibly at the top of your response."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -69,7 +101,11 @@ TOOLS = [
     },
     {
         "name": "search_verses",
-        "description": "Search for keywords across Arabic text, Balagh ul Quran, Tafseer e Namoona, Allama Jawadi translations, footnotes, and Tafseer commentary.",
+        "description": (
+            "Search for keywords across Arabic text (diacritics-insensitive), Balagh ul Quran, "
+            "Tafseer e Namoona, Allama Jawadi translations, footnotes, and Tafseer commentary. "
+            "Returns matching verses with full 'arabic' text. Always show the 'arabic' text in results."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -90,13 +126,58 @@ TOOLS = [
             "type": "object",
             "properties": {}
         }
+    },
+    {
+        "name": "list_editions",
+        "description": "List available Quran Arabic text, Urdu/English translation, and Shia Tafseer commentary editions with author, language, and license metadata.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "edition_type": {
+                    "type": "string",
+                    "enum": ["all", "quran", "translation", "tafseer"],
+                    "description": "Filter by edition type (default: 'all')",
+                    "default": "all"
+                }
+            }
+        }
+    },
+    {
+        "name": "fetch_grounding_rules",
+        "description": "Return canonical grounding rules for quoting Arabic Quranic text, translations, and Shia Tafseer commentaries accurately with proper scholarly attribution.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
     }
 ]
+
+ARABIC_DIACRITICS_RE = re.compile(r"[\u0640\u064B-\u065F\u0670\u06D6-\u06ED]+")
+
+
+def normalize_arabic(text):
+    """Strips Arabic harakat/tashkeel, tatweel, and normalizes Alef/Ya/Ta-Marbuta for search."""
+    if not text:
+        return ""
+    s = ARABIC_DIACRITICS_RE.sub("", text)
+    s = re.sub(r"[أإآٱ]", "ا", s)
+    s = s.replace("ى", "ي").replace("ک", "ك").replace("ی", "ي").replace("ہ", "ه").replace("ة", "ه")
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _valid_arabic(val):
+    if not val:
+        return ""
+    s = val.strip()
+    if s.startswith("$") and len(s) < 12:
+        return ""
+    return s
 
 
 def get_db():
     conn = sqlite3.connect(DB_PATH, timeout=20)
     conn.row_factory = sqlite3.Row
+    conn.create_function("NORM_AR", 1, normalize_arabic)
     return conn
 
 
@@ -166,7 +247,141 @@ def execute_tool(name, args):
     try:
         cur = conn.cursor()
 
-        if name == "list_surahs":
+        if name == "list_editions":
+            etype = args.get("edition_type", "all")
+            editions = [
+                {
+                    "edition_id": "quran-simple",
+                    "edition_type": "quran",
+                    "lang": "ar",
+                    "name": "Tanzil Quran Text (Simple, Version 1.1)",
+                    "author": "Tanzil Project",
+                    "source_url": "https://tanzil.net",
+                    "license": "CC BY 3.0 (Verbatim copy; changing text is not allowed)"
+                },
+                {
+                    "edition_id": "ur.jawadi",
+                    "edition_type": "translation",
+                    "lang": "ur",
+                    "name": "ترجمہ علامہ سید ذیشان حیدر جوادی",
+                    "author": "Allama Syed Zeeshan Haider Jawadi",
+                    "source_url": "https://tanzil.net/trans/ur.jawadi",
+                    "license": "CC BY-NC-ND 3.0 (Verbatim text with attribution to Tanzil.net)"
+                },
+                {
+                    "edition_id": "balagh",
+                    "edition_type": "translation",
+                    "lang": "ur",
+                    "name": "بلاغ القرآن (Balagh ul Quran)",
+                    "author": "Allama Sheikh Mohsin Ali Najafi",
+                    "source_url": "https://www.balaghulquran.com"
+                },
+                {
+                    "edition_id": "namoona",
+                    "edition_type": "translation",
+                    "lang": "ur",
+                    "name": "ترجمہ تفسیر نمونہ (Tafseer e Namoona Translation)",
+                    "author": "Maulana Syed Safdar Hussain Najafi",
+                    "source_url": "https://www.tafseerenamoona.net"
+                },
+                {
+                    "edition_id": "en.yusufali-shakir",
+                    "edition_type": "translation",
+                    "lang": "en",
+                    "name": "English Translation (Yusuf Ali & M. H. Shakir)",
+                    "author": "Abdullah Yusuf Ali / M. H. Shakir",
+                    "source_url": "https://www.tafseerenamoona.net"
+                },
+                {
+                    "edition_id": "kauthar",
+                    "edition_type": "tafseer",
+                    "lang": "ur",
+                    "name": "الکوثر فی تفسیر القرآن (Tafseer al-Kauthar & Hawashi)",
+                    "author": "Allama Sheikh Mohsin Ali Najafi",
+                    "source_url": "https://www.balaghulquran.com"
+                },
+                {
+                    "edition_id": "namoona-tafseer",
+                    "edition_type": "tafseer",
+                    "lang": "ur/en",
+                    "name": "تفسیر نمونہ (Tafseer e Namoona)",
+                    "author": "Grand Ayatollah Naser Makarem Shirazi (trans. Maulana Syed Safdar Hussain Najafi)",
+                    "source_url": "https://www.tafseerenamoona.net"
+                },
+            ]
+            if etype != "all":
+                editions = [e for e in editions if e["edition_type"] == etype]
+            return {"count": len(editions), "edition_type": etype, "editions": editions}
+
+        elif name == "fetch_grounding_rules":
+            return {
+                "grounding_rules": (
+                    "# Grounding Rules for Shia Quran & Tafseer MCP\n\n"
+                    "1. **Always Render Verbatim Arabic Text (`quran-simple`)**: In every response that discusses a Quranic verse, translation, or Tafseer commentary, you MUST visibly display the exact Arabic verse text (`arabic`) at the top of your output without altering letters, diacritics, or waqf marks. Never omit, truncate, or reconstruct Quranic Arabic from memory.\n"
+                    "2. **Verbatim Translations**: Preserve Allama Syed Zeeshan Haider Jawadi's translation (`ur.jawadi` from Tanzil.net under CC BY-NC-ND 3.0), Allama Sheikh Mohsin Ali Najafi's *Balagh ul Quran*, and Maulana Syed Safdar Hussain Najafi's translation accurately with explicit attribution.\n"
+                    "3. **Source-Grounded Tafseer**: Distinguish clearly between *Tafseer al-Kauthar* (Allama Sheikh Mohsin Ali Najafi) and *Tafseer e Namoona* (Grand Ayatollah Naser Makarem Shirazi), and cite the verse key (`surah:ayah`) and source URL.\n"
+                )
+            }
+
+        elif name == "fetch_quran":
+            surah = int(args.get("surah", 1))
+            ayah_raw = args.get("ayah")
+            ayahs_spec = str(args.get("ayahs", "")).strip()
+
+            start_ayah = None
+            end_ayah = None
+            if ayahs_spec:
+                spec = ayahs_spec
+                if ":" in spec:
+                    s_part, a_part = spec.split(":", 1)
+                    surah = int(s_part.strip())
+                    spec = a_part.strip()
+                if "-" in spec:
+                    p1, p2 = spec.split("-", 1)
+                    start_ayah = int(p1.strip())
+                    end_ayah = int(p2.strip())
+                else:
+                    start_ayah = int(spec)
+                    end_ayah = start_ayah
+            elif ayah_raw is not None:
+                start_ayah = int(ayah_raw)
+                end_ayah = start_ayah
+
+            jawadi_loader.validate_surah_ayah(surah, start_ayah)
+            if end_ayah is not None and end_ayah != start_ayah:
+                jawadi_loader.validate_surah_ayah(surah, end_ayah)
+            jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
+
+            if start_ayah is not None and end_ayah is not None:
+                cur.execute(
+                    "SELECT surah, ayah, verse_key, text FROM quran_text_tanzil WHERE surah = ? AND ayah BETWEEN ? AND ? ORDER BY ayah ASC",
+                    (surah, start_ayah, end_ayah),
+                )
+            else:
+                cur.execute(
+                    "SELECT surah, ayah, verse_key, text FROM quran_text_tanzil WHERE surah = ? ORDER BY ayah ASC",
+                    (surah,),
+                )
+            rows = cur.fetchall()
+            verses = [
+                {
+                    "verse_key": r["verse_key"],
+                    "surah": r["surah"],
+                    "ayah": r["ayah"],
+                    "arabic": r["text"],
+                }
+                for r in rows
+            ]
+            return {
+                "surah": surah,
+                "edition_id": "quran-simple",
+                "count": len(verses),
+                "verses": verses,
+                "grounding_rules": GROUNDING_NOTICE,
+                "sources": {"arabic": jawadi_loader.ARABIC_ATTRIBUTION},
+            }
+
+        elif name == "list_surahs":
             cur.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='surahs'"
             )
@@ -268,7 +483,7 @@ def execute_tool(name, args):
                     "verse_key": f"{surah}:{a}",
                     "surah": surah,
                     "ayah": a,
-                    "arabic": (r["arabic"] if (r and r["arabic"]) else arabic_map.get(a, "")),
+                    "arabic": arabic_map.get(a) or (_valid_arabic(r["arabic"]) if r else ""),
                     "english": r["trans_en"] if r else ""
                 }
                 if edition in ("all", "balagh") and r:
@@ -284,7 +499,8 @@ def execute_tool(name, args):
             resp = {
                 "surah": surah,
                 "count": len(results),
-                "verses": results
+                "verses": results,
+                "grounding_rules": GROUNDING_NOTICE,
             }
             sources = {}
             if has_arabic_table:
@@ -323,11 +539,12 @@ def execute_tool(name, args):
 
             res = {
                 "verse_key": f"{surah}:{ayah}",
-                "arabic": row["arabic"] or (arow["text"] if arow else ""),
+                "arabic": (arow["text"] if arow and arow["text"] else _valid_arabic(row["arabic"])),
                 "translation_balagh": row["trans_balagh"],
                 "translation_namoona": row["trans_namoona"],
                 "translation_jawadi": jrow["text"] if jrow else "",
-                "english": row["trans_en"]
+                "english": row["trans_en"],
+                "grounding_rules": GROUNDING_NOTICE,
             }
             if source in ("all", "kauthar"):
                 k_text = _ensure_kauthar_tafseer(conn, surah, ayah)
@@ -362,6 +579,8 @@ def execute_tool(name, args):
             jawadi_loader.ensure_loaded(conn, db_path=DB_PATH)
 
             pattern = f"%{query}%"
+            norm_q = normalize_arabic(query)
+            norm_pattern = f"%{norm_q}%" if norm_q else pattern
             matches = []
 
             cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='verses'")
@@ -372,16 +591,18 @@ def execute_tool(name, args):
                     cur.execute(
                         """
                         SELECT j.verse_key, j.surah, j.ayah, j.text AS trans_jawadi,
-                               COALESCE(NULLIF(v.arabic, ''), q.text, '') AS arabic,
+                               COALESCE(NULLIF(q.text, ''), NULLIF(v.arabic, ''), '') AS arabic,
                                COALESCE(v.trans_en, '') AS trans_en
                         FROM translation_jawadi j
                         LEFT JOIN quran_text_tanzil q ON q.verse_key = j.verse_key
                         LEFT JOIN verses v ON v.verse_key = j.verse_key
-                        WHERE j.text LIKE ? OR q.text LIKE ? OR v.arabic LIKE ? OR v.trans_en LIKE ?
+                        WHERE j.text LIKE ? OR q.text LIKE ? OR v.arabic LIKE ?
+                           OR NORM_AR(q.text) LIKE ? OR NORM_AR(v.arabic) LIKE ?
+                           OR v.trans_en LIKE ?
                         ORDER BY j.surah ASC, j.ayah ASC
                         LIMIT 20
                         """,
-                        (pattern, pattern, pattern, pattern),
+                        (pattern, pattern, pattern, norm_pattern, norm_pattern, pattern),
                     )
                 else:
                     cur.execute(
@@ -390,11 +611,11 @@ def execute_tool(name, args):
                                COALESCE(q.text, '') AS arabic, '' AS trans_en
                         FROM translation_jawadi j
                         LEFT JOIN quran_text_tanzil q ON q.verse_key = j.verse_key
-                        WHERE j.text LIKE ? OR q.text LIKE ?
+                        WHERE j.text LIKE ? OR q.text LIKE ? OR NORM_AR(q.text) LIKE ?
                         ORDER BY j.surah ASC, j.ayah ASC
                         LIMIT 20
                         """,
-                        (pattern, pattern),
+                        (pattern, pattern, norm_pattern),
                     )
                 for r in cur.fetchall():
                     matches.append({
@@ -407,19 +628,27 @@ def execute_tool(name, args):
                 cur.execute(
                     """
                     SELECT v.surah, v.ayah, v.verse_key,
-                           COALESCE(NULLIF(v.arabic, ''), q.text, '') AS arabic,
+                           COALESCE(NULLIF(q.text, ''), NULLIF(v.arabic, ''), '') AS arabic,
                            v.trans_balagh, v.trans_namoona, v.trans_en,
                            j.text AS trans_jawadi
                     FROM verses v
                     LEFT JOIN quran_text_tanzil q ON q.verse_key = v.verse_key
                     LEFT JOIN translation_jawadi j ON j.verse_key = v.verse_key
-                    WHERE v.arabic LIKE ? OR q.text LIKE ? OR v.trans_balagh LIKE ? OR v.trans_namoona LIKE ?
+                    WHERE v.arabic LIKE ? OR q.text LIKE ?
+                       OR NORM_AR(q.text) LIKE ? OR NORM_AR(v.arabic) LIKE ?
+                       OR v.trans_balagh LIKE ? OR v.trans_namoona LIKE ?
                        OR v.trans_en LIKE ? OR j.text LIKE ?
                        OR v.footnotes_balagh LIKE ? OR v.tafseer_namoona LIKE ? OR v.tafseer_kauthar LIKE ?
                     ORDER BY v.surah ASC, v.ayah ASC
                     LIMIT 20
                     """,
-                    (pattern, pattern, pattern, pattern, pattern, pattern, pattern, pattern, pattern),
+                    (
+                        pattern, pattern,
+                        norm_pattern, norm_pattern,
+                        pattern, pattern,
+                        pattern, pattern,
+                        pattern, pattern, pattern,
+                    ),
                 )
                 for r in cur.fetchall():
                     item = {
@@ -436,7 +665,8 @@ def execute_tool(name, args):
             resp = {
                 "query": query,
                 "match_count": len(matches),
-                "matches": matches
+                "matches": matches,
+                "grounding_rules": GROUNDING_NOTICE,
             }
             sources = {"arabic": jawadi_loader.ARABIC_ATTRIBUTION}
             if edition in ("all", "jawadi"):
@@ -474,7 +704,8 @@ def handle_single_rpc(req):
                 "serverInfo": {
                     "name": "quran-shia-mcp",
                     "version": VERSION
-                }
+                },
+                "instructions": GROUNDING_NOTICE
             }
         }
     elif method == "tools/list":
@@ -684,6 +915,12 @@ class MCPHandler(BaseHTTPRequestHandler):
 
 def main():
     jawadi_loader.ensure_loaded(db_path=DB_PATH)
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20)
+        builder.repair_and_sync_db(conn)
+        conn.close()
+    except Exception:
+        pass
     print(f"Starting Shia Quran MCP Server v{VERSION} on http://{HOST}:{PORT}")
     server = ThreadingHTTPServer((HOST, PORT), MCPHandler)
     try:
