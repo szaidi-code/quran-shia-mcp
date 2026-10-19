@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shia Quran & Tafseer MCP Server — All 114 Surahs & Interactive Explorer</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg-dark: #070a11;
@@ -305,9 +305,9 @@
   }
 
   .arabic-text {
-    font-family: 'Amiri', serif;
-    font-size: 28px;
-    line-height: 2.0;
+    font-family: 'Amiri Quran', 'Scheherazade New', 'Amiri', serif;
+    font-size: 30px;
+    line-height: 2.25;
     direction: rtl;
     text-align: right;
     color: var(--gold-light);
@@ -447,6 +447,381 @@
     color: var(--cyan);
     font-size: 12.5px;
   }
+
+  /* mcp.quran.ai style Tool Reference Cards */
+  .tool-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin: 18px 0 32px;
+  }
+  .tool-overview-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: rgba(3, 7, 18, 0.65);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.18s ease;
+  }
+  .tool-overview-card:hover {
+    border-color: var(--gold);
+    background: rgba(212, 175, 55, 0.06);
+    transform: translateY(-2px);
+  }
+  .tool-overview-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cyan);
+    margin-bottom: 6px;
+  }
+  .tool-overview-summary {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+  .tool-overview-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+  }
+
+  .group-header {
+    margin: 34px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .group-header h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 19px;
+    color: var(--gold-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .group-header p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  article.tool-ref {
+    background: rgba(15, 23, 42, 0.82);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 22px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+  }
+  article.tool-ref:target {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold), 0 12px 36px rgba(212, 175, 55, 0.15);
+  }
+  .tool-ref-header {
+    margin-bottom: 18px;
+  }
+  .tool-ref-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .tool-ref-title h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .tool-ref-title h3 a {
+    color: var(--cyan);
+    text-decoration: none;
+  }
+  .tool-ref-title h3 a:hover {
+    text-decoration: underline;
+  }
+  .tool-stats {
+    display: flex;
+    gap: 8px;
+  }
+  .tool-stat-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: #cbd5e1;
+  }
+  .tool-desc {
+    font-size: 14px;
+    color: #cbd5e1;
+    line-height: 1.65;
+  }
+  .tool-panel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 860px) {
+    .tool-panel-grid, .example-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  .panel-card {
+    background: rgba(3, 7, 18, 0.65);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 16px;
+    overflow-x: auto;
+  }
+  .panel-heading {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+  table.field-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  table.field-table th, table.field-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    vertical-align: top;
+  }
+  table.field-table th {
+    color: var(--text-muted);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  table.field-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    color: #f8fafc;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  table.field-table td:nth-child(2) {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--cyan);
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+  .badge-req {
+    background: rgba(16, 185, 129, 0.14);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  .badge-opt {
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .default-val {
+    display: inline-block;
+    margin-left: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--gold-light);
+  }
+  details.example {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 12px;
+  }
+  details.example summary {
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--gold-light);
+    user-select: none;
+    margin-bottom: 12px;
+  }
+  .example-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .code-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .edition-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--gold-light);
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  .edition-pill:hover {
+    background: var(--gold);
+    color: #070a11;
+  }
+
+  /* mcp.quran.ai style Study Walkthrough, Usage Showcases, & Troubleshooting */
+  .study-flow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+    gap: 16px;
+    margin: 20px 0 28px;
+  }
+  .study-step-card {
+    background: rgba(3, 7, 18, 0.65);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 18px;
+    position: relative;
+  }
+  .study-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.14);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    color: var(--gold-light);
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  .study-step-card h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    color: var(--gold-light);
+    margin-bottom: 6px;
+  }
+  .study-step-card p {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin-bottom: 0;
+  }
+  .usage-showcase {
+    background: rgba(3, 7, 18, 0.72);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .usage-showcase-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: rgba(15, 23, 42, 0.85);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .usage-showcase-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+  .usage-tool-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .usage-tool-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .usage-prompt-bar {
+    padding: 14px 20px;
+    background: rgba(212, 175, 55, 0.06);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 14px;
+    color: #f8fafc;
+  }
+  .usage-prompt-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-right: 10px;
+    font-weight: 700;
+  }
+  .usage-response-body {
+    padding: 20px;
+  }
+  .troubleshoot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .troubleshoot-card {
+    background: rgba(3, 7, 18, 0.65);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .troubleshoot-card h4 {
+    font-size: 14.5px;
+    color: var(--gold-light);
+    margin-bottom: 8px;
+  }
+  .troubleshoot-card p {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+  .notes-list {
+    list-style: none;
+    margin-top: 14px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .notes-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 13.5px;
+    color: #cbd5e1;
+    line-height: 1.65;
+  }
+  .notes-list li strong {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    margin-right: 8px;
+  }
 </style>
 </head>
 <body>
@@ -458,10 +833,13 @@
   </a>
   <div class="nav-links">
     <a onclick="activateTab('explorer')">Live Explorer</a>
+    <a href="#setup-and-connect" onclick="activateTab('tools')">How to Use</a>
+    <a href="#usage-examples" onclick="activateTab('tools')">Examples</a>
     <a onclick="activateTab('claude')">Claude</a>
     <a onclick="activateTab('chatgpt')">ChatGPT</a>
     <a onclick="activateTab('antigravity')">Antigravity / Cursor</a>
-    <a onclick="activateTab('tools')">Tools</a>
+    <a href="#available-tools" onclick="activateTab('tools')">Tool Reference</a>
+    <a href="#editions" onclick="activateTab('tools')">Editions</a>
     <a href="https://github.com/szaidi-code/quran-shia-mcp" target="_blank">GitHub</a>
   </div>
 </nav>
@@ -476,7 +854,8 @@
   <div class="stats-row">
     <div class="stat-pill">Surahs Indexed: <strong id="stat-surahs">114 / 114</strong></div>
     <div class="stat-pill">Verses Indexed: <strong id="stat-verses">6,236</strong></div>
-    <div class="stat-pill">Editions: <strong>Jawadi • Balagh • Namoona</strong></div>
+    <div class="stat-pill">Documented Tools: <strong>7 Tools</strong></div>
+    <div class="stat-pill">Editions: <strong>Tanzil Arabic • Jawadi • Balagh • Namoona</strong></div>
   </div>
 
   <div class="endpoint-pill-box">
@@ -492,7 +871,7 @@
     <button class="tab-btn" data-tab="claude" onclick="activateTab('claude')">Claude Setup</button>
     <button class="tab-btn" data-tab="chatgpt" onclick="activateTab('chatgpt')">ChatGPT Setup</button>
     <button class="tab-btn" data-tab="antigravity" onclick="activateTab('antigravity')">Antigravity &amp; Cursor</button>
-    <button class="tab-btn" data-tab="tools" onclick="activateTab('tools')">Available Tools</button>
+    <button class="tab-btn" data-tab="tools" onclick="activateTab('tools')">Documentation, Tools &amp; Examples</button>
   </div>
 
   <!-- EXPLORER TAB -->
@@ -504,9 +883,9 @@
       <div class="preset-row">
         <span class="preset-chip" onclick="loadVerse(1, 1)">Surah Al-Fatihah (1:1)</span>
         <span class="preset-chip" onclick="loadVerse(2, 255)">Ayat ul-Kursi (2:255)</span>
-        <span class="preset-chip" onclick="loadVerse(2, 256)">Ayat ul-Kursi II (2:256)</span>
-        <span class="preset-chip" onclick="loadVerse(2, 257)">Ayat ul-Kursi III (2:257)</span>
+        <span class="preset-chip" onclick="loadVerse(2, 282)">Ayat al-Dayn (2:282)</span>
         <span class="preset-chip" onclick="loadVerse(5, 55)">Verse of Wilayah (5:55)</span>
+        <span class="preset-chip" onclick="loadVerse(24, 55)">Ayat al-Istikhlaf (24:55)</span>
         <span class="preset-chip" onclick="loadVerse(33, 33)">Verse of Tatheer (33:33)</span>
         <span class="preset-chip" onclick="loadVerse(42, 23)">Verse of Mawaddah (42:23)</span>
         <span class="preset-chip" onclick="loadVerse(36, 1)">Surah Yasin (36:1)</span>
@@ -558,7 +937,7 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
 }</pre>
           </div>
         </li>
-        <li>Restart Claude Desktop. You will see the hammer tool icon appear with <code>fetch_translation</code>, <code>fetch_tafseer</code>, <code>search_verses</code>, and <code>list_surahs</code>!</li>
+        <li>Restart Claude Desktop. You will see the hammer tool icon appear with <code>fetch_quran</code>, <code>fetch_translation</code>, <code>fetch_tafseer</code>, <code>search_verses</code>, <code>list_surahs</code>, <code>list_editions</code>, and <code>fetch_grounding_rules</code>!</li>
       </ol>
     </div>
   </div>
@@ -609,46 +988,823 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
     </div>
   </div>
 
-  <!-- TOOLS TAB -->
+  <!-- TOOLS & REFERENCE TAB (#available-tools) -->
   <div id="tab-tools" class="tab-pane" style="display: none;">
-    <div class="guide-card" id="tools">
-      <h2>Available MCP Tools</h2>
-      <p>These tools are automatically discovered by any connected AI assistant across all 114 Surahs:</p>
+    <!-- STUDY WALKTHROUGH (#setup-and-connect) -->
+    <div class="guide-card" id="setup-and-connect">
+      <h2>Your First Study Session: How to Use <a href="#setup-and-connect" style="color:var(--gold);text-decoration:none;font-size:16px;">#</a></h2>
+      <p>Once you connect <code>https://quran-shia-mcp.onrender.com/mcp</code> in Claude, ChatGPT, Antigravity, or Cursor, you can immediately ask questions by Surah/Ayah reference, Arabic phrase, or theological topic. Every response is grounded in canonical Tanzil Simple v1.1 Arabic text and verified Shia scholarship.</p>
+
+      <div class="study-flow-grid" id="setup-at-a-glance">
+        <div class="study-step-card">
+          <div class="study-step-num">1</div>
+          <h4>Connect</h4>
+          <p>Add <code>https://quran-shia-mcp.onrender.com/mcp</code> to your AI client with server name <code>quran-shia</code>. No API key or OAuth login is required.</p>
+        </div>
+        <div class="study-step-card">
+          <div class="study-step-num">2</div>
+          <h4>Read Verbatim Arabic</h4>
+          <p>Ask for any verse or range (e.g. <em>"Show me Surah An-Nur 24:55"</em>). The AI calls <code>fetch_quran</code> or <code>fetch_translation</code> and renders the full vocalized Arabic text at the top.</p>
+        </div>
+        <div class="study-step-card">
+          <div class="study-step-num">3</div>
+          <h4>Compare Shia Tafseer</h4>
+          <p>Ask <em>"Give me the Tafseer of 5:55"</em> to compare <strong>Tafseer al-Kauthar</strong> (Allama Sheikh Mohsin Ali Najafi) and <strong>Tafseer e Namoona</strong> (Ayatollah Makarem Shirazi).</p>
+        </div>
+        <div class="study-step-card">
+          <div class="study-step-num">4</div>
+          <h4>Search Across 114 Surahs</h4>
+          <p>Search by unvocalized Arabic (e.g. <code>ليذهب عنكم الرجس اهل البيت</code>), Urdu, or English topics via <code>search_verses</code> to discover related verses and footnotes.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- USAGE EXAMPLES & SHOWCASES (#usage-examples) -->
+    <div class="guide-card" id="usage-examples">
+      <h2>Usage Examples &amp; Showcases <a href="#usage-examples" style="color:var(--gold);text-decoration:none;font-size:16px;">#</a></h2>
+      <p>See how prompts translate into MCP tool calls and grounded responses with full visible Arabic verses, multi-scholar translations, and classical Shia commentary.</p>
+
+      <!-- Showcase 1 -->
+      <div class="usage-showcase">
+        <div class="usage-showcase-header">
+          <span class="usage-showcase-title">1. Classical Shia Exegesis — Ayat al-Istikhlaf (Surah An-Nur 24:55)</span>
+          <div class="usage-tool-badges">
+            <span class="usage-tool-badge">fetch_tafseer(surah=24, ayah=55, source="all")</span>
+          </div>
+        </div>
+        <div class="usage-prompt-bar">
+          <span class="usage-prompt-label">Prompt</span>
+          <em>"Give me the Tafseer of Ayat al-Istikhlaf (Surah An-Nur 24:55) with the Arabic text and translations."</em>
+        </div>
+        <div class="usage-response-body">
+          <div class="code-label">Verbatim Arabic Text (Tanzil Simple v1.1 • 24:55)</div>
+          <div class="arabic-text" lang="ar" dir="rtl">وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَعَمِلُوا الصَّالِحَاتِ لَيَسْتَخْلِفَنَّهُمْ فِي الْأَرْضِ كَمَا اسْتَخْلَفَ الَّذِينَ مِن قَبْلِهِمْ وَلَيُمَكِّنَنَّ لَهُمْ دِينَهُمُ الَّذِي ارْتَضَىٰ لَهُمْ وَلَيُبَدِّلَنَّهُم مِّن بَعْدِ خَوْفِهِمْ أَمْنًا ۚ يَعْبُدُونَنِي لَا يُشْرِكُونَ بِي شَيْئًا ۚ وَمَن كَفَرَ بَعْدَ ذَٰلِكَ فَأُولَٰئِكَ هُمُ الْفَاسِقُونَ</div>
+          <div class="tafseer-badge">Allama Syed Zeeshan Haider Jawadi (ur.jawadi)</div>
+          <div class="urdu-text" lang="ur" dir="rtl">اللہ نے تم میں سے صاحبانِ ایمان و عملِ صالح سے وعدہ کیا ہے کہ انہیں زمین میں اسی طرح خلیفہ بنائے گا جس طرح پہلے والوں کو بنایا ہے اور ان کے لئے اس دین کو مضبوط بنائے گا جسے ان کے لئے پسندیدہ قرار دیا ہے اور ان کے خوف کو امن سے تبدیل کردے گا کہ وہ سب صرف میری عبادت کریں گے اور میرے ساتھ کسی طرح کا شرک نہ کریں گے اور اس کے بعد بھی کوئی کافر ہوجائے تو درحقیقت وہی لوگ فاسق اور بدکار ہیں</div>
+          <div style="font-size:13.5px;color:#cbd5e1;line-height:1.7;">
+            <strong>Key Exegetical Takeaways (Tafseer e Namoona &amp; Tafseer al-Kauthar):</strong>
+            <br>• <strong>Three Divine Promises:</strong> (1) Vicegerency &amp; righteous sovereignty in the earth (<em>Istikhlaf</em>), (2) Complete establishment of the pleasing religion of Islam (<em>Tamkeen al-Din</em>), and (3) Transformation of fear into complete security enabling pure monotheism.
+            <br>• <strong>Hadith of the Ahlulbayt (a.s.):</strong> Narrations from Imam Ali Zayn al-Abidin (a.s.), Imam Muhammad al-Baqir (a.s.), and Imam Ja'far al-Sadiq (a.s.) explain that the complete, universal fulfillment of this promise is realized in the global government of <strong>Imam al-Mahdi (a.s.)</strong> and his righteous companions.
+          </div>
+        </div>
+      </div>
+
+      <!-- Showcase 2 -->
+      <div class="usage-showcase">
+        <div class="usage-showcase-header">
+          <span class="usage-showcase-title">2. Comparative Translation &amp; Hawashi — Verse of Wilayah (Surah Al-Ma'idah 5:55)</span>
+          <div class="usage-tool-badges">
+            <span class="usage-tool-badge">fetch_translation(surah=5, ayah=55, edition="all")</span>
+            <span class="usage-tool-badge">fetch_tafseer(surah=5, ayah=55, source="all")</span>
+          </div>
+        </div>
+        <div class="usage-prompt-bar">
+          <span class="usage-prompt-label">Prompt</span>
+          <em>"Compare Allama Jawadi, Balagh ul Quran, and Tafseer e Namoona on Surah Al-Ma'idah 5:55 and explain its Shan-e-Nuzool."</em>
+        </div>
+        <div class="usage-response-body">
+          <div class="code-label">Verbatim Arabic Text (Tanzil Simple v1.1 • 5:55)</div>
+          <div class="arabic-text" lang="ar" dir="rtl">إِنَّمَا وَلِيُّكُمُ اللَّهُ وَرَسُولُهُ وَالَّذِينَ آمَنُوا الَّذِينَ يُقِيمُونَ الصَّلَاةَ وَيُؤْتُونَ الزَّكَاةَ وَهُمْ رَاكِعُونَ</div>
+          <div style="font-size:13.5px;color:#cbd5e1;line-height:1.7;">
+            <strong>Scholarly Consensus on Shan-e-Nuzool:</strong> Both <em>Tafseer al-Kauthar</em> (Allama Sheikh Mohsin Ali Najafi) and <em>Tafseer e Namoona</em> (Grand Ayatollah Makarem Shirazi) cite the mutawatir Sunni and Shia reports that this verse was revealed when <strong>Imam Ali ibn Abi Talib (a.s.)</strong> gave his ring in charity (<em>zakat</em>) to a needy person while bowing in <em>ruku'</em> during prayer, establishing his divinely appointed Wilayah alongside Allah and His Messenger (s.a.w.w.).
+          </div>
+        </div>
+      </div>
+
+      <!-- Showcase 3 -->
+      <div class="usage-showcase" style="margin-bottom:0;">
+        <div class="usage-showcase-header">
+          <span class="usage-showcase-title">3. Diacritics-Insensitive Arabic Search — Verse of Tatheer (Surah Al-Ahzab 33:33)</span>
+          <div class="usage-tool-badges">
+            <span class="usage-tool-badge">search_verses(query="ليذهب عنكم الرجس اهل البيت")</span>
+          </div>
+        </div>
+        <div class="usage-prompt-bar">
+          <span class="usage-prompt-label">Prompt</span>
+          <em>"Find the verse containing 'ليذهب عنكم الرجس اهل البيت' and show the full Arabic verse and translation."</em>
+        </div>
+        <div class="usage-response-body">
+          <div class="code-label">Matched Verse 33:33 (Tanzil Simple v1.1)</div>
+          <div class="arabic-text" lang="ar" dir="rtl" style="margin-bottom:8px;padding-bottom:8px;">... إِنَّمَا يُرِيدُ اللَّهُ لِيُذْهِبَ عَنكُمُ الرِّجْسَ أَهْلَ الْبَيْتِ وَيُطَهِّرَكُمْ تَطْهِيرًا</div>
+          <div style="font-size:13.5px;color:#cbd5e1;">
+            Even when queried without Arabic diacritics (<em>harakat</em>) or hamza forms, <code>search_verses</code> normalizes the query via <code>NORM_AR</code> and returns the full vocalized Tanzil verse along with Jawadi, Balagh, and Namoona translations.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-card" id="available-tools">
+      <h2>Tool Reference <a href="#available-tools" style="color:var(--gold);text-decoration:none;font-size:16px;">#</a></h2>
+      <p>7 documented tools across 2 ordered groups. Each reference includes the real parameter schema, response shape, rendered canonical Arabic verse output, and structured example contracts served by v1.2.0.</p>
+
+      <!-- Quick Overview Grid -->
+      <div class="tool-overview-grid">
+        <a class="tool-overview-card" href="#fetch_quran" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_quran</div>
+            <div class="tool-overview-summary">Fetch canonical verbatim Arabic Quran text (Tanzil Simple v1.1, <code>quran-simple</code>) by Surah, Ayah, or Ayah range.</div>
+          </div>
+          <div class="tool-overview-meta">1 required · 2 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#fetch_translation" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_translation</div>
+            <div class="tool-overview-summary">Fetch canonical Tanzil Arabic text with Jawadi, Balagh ul Quran, Namoona, and English translations.</div>
+          </div>
+          <div class="tool-overview-meta">1 required · 2 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#fetch_tafseer" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_tafseer</div>
+            <div class="tool-overview-summary">Fetch full classical Shia Tafseer commentary from Tafseer al-Kauthar and Tafseer e Namoona with Arabic text.</div>
+          </div>
+          <div class="tool-overview-meta">2 required · 1 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#search_verses" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">search_verses</div>
+            <div class="tool-overview-summary">Diacritics-insensitive Arabic search and full-text Urdu/English translation &amp; commentary search.</div>
+          </div>
+          <div class="tool-overview-meta">1 required · 1 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#list_surahs" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">list_surahs</div>
+            <div class="tool-overview-summary">List all 114 Surahs with Arabic title, English title, and canonical verse count.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 0 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#list_editions" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">list_editions</div>
+            <div class="tool-overview-summary">Discover available Quran Arabic, translation, and Shia Tafseer edition IDs and licenses.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 1 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#fetch_grounding_rules" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_grounding_rules</div>
+            <div class="tool-overview-summary">Retrieve canonical grounding rules for verbatim Quranic quoting and scholarly attribution.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 0 optional</div>
+        </a>
+      </div>
+
+      <!-- GROUP 1: Search & Retrieval -->
+      <div class="group-header" id="search-and-retrieval">
+        <h3>Search &amp; Retrieval</h3>
+        <p>Fetch verbatim Quranic Arabic text, verified Urdu &amp; English translations, and classical Shia Tafseer commentary by verse reference, or search across all 114 Surahs.</p>
+      </div>
+
+      <!-- 1. fetch_quran -->
+      <article class="tool-ref" id="fetch_quran">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_quran">fetch_quran</a></h3>
+            <div class="tool-stats">
+              <span class="tool-stat-pill">1 required</span>
+              <span class="tool-stat-pill">2 optional</span>
+            </div>
+          </div>
+          <p class="tool-desc">Fetch canonical verbatim Arabic Quran text (Tanzil Simple v1.1, <code>quran-simple</code>) by Surah number and optional Ayah or Ayah range (e.g. <code>"24:55"</code> or <code>"2:255-257"</code>). Includes embedded <code>grounding_rules</code> instructing AI assistants to always render the full Arabic text visibly at the top of every response.</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Name</th><th>Type</th><th>Status</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>surah</td>
+                  <td>int</td>
+                  <td><span class="badge badge-req">required</span></td>
+                  <td>Surah number (1–114).</td>
+                </tr>
+                <tr>
+                  <td>ayah</td>
+                  <td>int | null</td>
+                  <td><span class="badge badge-opt">optional</span></td>
+                  <td>Specific Ayah number within the Surah.</td>
+                </tr>
+                <tr>
+                  <td>ayahs</td>
+                  <td>str | null</td>
+                  <td><span class="badge badge-opt">optional</span></td>
+                  <td>Ayah key or range (e.g. <code>"55"</code>, <code>"24:55"</code>, <code>"1-7"</code>, or <code>"2:255-257"</code>).</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>surah</td><td>int</td><td>Queried Surah number (1–114).</td></tr>
+                <tr><td>edition_id</td><td>str</td><td>Canonical Arabic edition ID (<code>"quran-simple"</code>).</td></tr>
+                <tr><td>count</td><td>int</td><td>Number of verse objects returned.</td></tr>
+                <tr><td>verses</td><td>list[object]</td><td>Verse entries with <code>verse_key</code>, <code>surah</code>, <code>ayah</code>, and full verbatim <code>arabic</code> text.</td></tr>
+                <tr><td>grounding_rules</td><td>str</td><td>Mandatory instruction to always display the verbatim <code>arabic</code> text visibly.</td></tr>
+                <tr><td>sources</td><td>object</td><td>Tanzil Project CC BY 3.0 attribution metadata.</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+        <details class="example" open>
+          <summary>Example &amp; Rendered Arabic Text (Surah An-Nur 24:55 — Ayat al-Istikhlaf)</summary>
+          <div class="verse-result-box" style="margin-bottom:14px;padding:18px;">
+            <div class="code-label" style="margin-bottom:6px;">Rendered Canonical Arabic Text (Tanzil Simple v1.1 • 24:55)</div>
+            <div class="arabic-text" lang="ar" dir="rtl" style="margin-bottom:0;padding-bottom:0;border-bottom:none;">وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَعَمِلُوا الصَّالِحَاتِ لَيَسْتَخْلِفَنَّهُمْ فِي الْأَرْضِ كَمَا اسْتَخْلَفَ الَّذِينَ مِن قَبْلِهِمْ وَلَيُمَكِّنَنَّ لَهُمْ دِينَهُمُ الَّذِي ارْتَضَىٰ لَهُمْ وَلَيُبَدِّلَنَّهُم مِّن بَعْدِ خَوْفِهِمْ أَمْنًا ۚ يَعْبُدُونَنِي لَا يُشْرِكُونَ بِي شَيْئًا ۚ وَمَن كَفَرَ بَعْدَ ذَٰلِكَ فَأُولَٰئِكَ هُمُ الْفَاسِقُونَ</div>
+          </div>
+          <div class="example-grid">
+            <div class="code-block">
+              <div class="code-label">Example call</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-call-quran')">copy</button>
+              <pre id="ex-call-quran">fetch_quran(
+  surah=24,
+  ayah=55
+)</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">Structured response</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-resp-quran')">copy</button>
+              <pre id="ex-resp-quran">{
+  "surah": 24,
+  "edition_id": "quran-simple",
+  "count": 1,
+  "verses": [
+    {
+      "verse_key": "24:55",
+      "surah": 24,
+      "ayah": 55,
+      "arabic": "وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَعَمِلُوا الصَّالِحَاتِ لَيَسْتَخْلِفَنَّهُمْ فِي الْأَرْضِ كَمَا اسْتَخْلَفَ الَّذِينَ مِن قَبْلِهِمْ وَلَيُمَكِّنَنَّ لَهُمْ دِينَهُمُ الَّذِي ارْتَضَىٰ لَهُمْ وَلَيُبَدِّلَنَّهُم مِّن بَعْدِ خَوْفِهِمْ أَمْنًا ۚ يَعْبُدُونَنِي لَا يُشْرِكُونَ بِي شَيْئًا ۚ وَمَن كَفَرَ بَعْدَ ذَٰلِكَ فَأُولَٰئِكَ هُمُ الْفَاسِقُونَ"
+    }
+  ],
+  "grounding_rules": "CRITICAL DISPLAY RULE: Always render the full verbatim 'arabic' verse text (Tanzil Simple v1.1) prominently at the top of your response...",
+  "sources": {
+    "arabic": { "id": "quran-simple", "source": "Tanzil Project", "url": "https://tanzil.net" }
+  }
+}</pre>
+            </div>
+          </div>
+        </details>
+      </article>
+
+      <!-- 2. fetch_translation -->
+      <article class="tool-ref" id="fetch_translation">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_translation">fetch_translation</a></h3>
+            <div class="tool-stats">
+              <span class="tool-stat-pill">1 required</span>
+              <span class="tool-stat-pill">2 optional</span>
+            </div>
+          </div>
+          <p class="tool-desc">Fetch Quranic verses with verbatim Tanzil Simple v1.1 Arabic text (<code>quran-simple</code>) and Urdu/English translations from Allama Syed Zeeshan Haider Jawadi (<code>ur.jawadi</code>), Balagh ul Quran (Allama Sheikh Mohsin Ali Najafi), and Tafseer e Namoona (Maulana Syed Safdar Hussain Najafi).</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Name</th><th>Type</th><th>Status</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>surah</td>
+                  <td>int</td>
+                  <td><span class="badge badge-req">required</span></td>
+                  <td>Surah number (1–114).</td>
+                </tr>
+                <tr>
+                  <td>ayah</td>
+                  <td>int | null</td>
+                  <td><span class="badge badge-opt">optional</span></td>
+                  <td>Specific Ayah number within the Surah. Omit to fetch the entire Surah.</td>
+                </tr>
+                <tr>
+                  <td>edition</td>
+                  <td>"all" | "jawadi" | "balagh" | "namoona"</td>
+                  <td><span class="badge badge-opt">optional</span><span class="default-val">default: "all"</span></td>
+                  <td>Translation edition selector. Use <code>"all"</code> for all editions or select a single translator.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>surah</td><td>int</td><td>Queried Surah number (1–114).</td></tr>
+                <tr><td>count</td><td>int</td><td>Number of verse objects returned.</td></tr>
+                <tr><td>verses</td><td>list[object]</td><td>Verse entries containing <code>verse_key</code>, <code>arabic</code>, <code>translation_jawadi</code>, <code>translation_balagh</code>, <code>footnotes_balagh</code>, <code>translation_namoona</code>, and <code>english</code>.</td></tr>
+                <tr><td>grounding_rules</td><td>str</td><td>Mandatory instruction to always display the verbatim <code>arabic</code> text visibly.</td></tr>
+                <tr><td>sources</td><td>object</td><td>Canonical Tanzil Arabic and Jawadi license/attribution metadata.</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+        <details class="example" open>
+          <summary>Example &amp; Rendered Arabic Text (Surah An-Nur 24:55)</summary>
+          <div class="verse-result-box" style="margin-bottom:14px;padding:18px;">
+            <div class="code-label" style="margin-bottom:6px;">Rendered Canonical Arabic Text (Tanzil Simple v1.1 • 24:55)</div>
+            <div class="arabic-text" lang="ar" dir="rtl" style="margin-bottom:0;padding-bottom:0;border-bottom:none;">وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَعَمِلُوا الصَّالِحَاتِ لَيَسْتَخْلِفَنَّهُمْ فِي الْأَرْضِ كَمَا اسْتَخْلَفَ الَّذِينَ مِن قَبْلِهِمْ وَلَيُمَكِّنَنَّ لَهُمْ دِينَهُمُ الَّذِي ارْتَضَىٰ لَهُمْ وَلَيُبَدِّلَنَّهُم مِّن بَعْدِ خَوْفِهِمْ أَمْنًا ۚ يَعْبُدُونَنِي لَا يُشْرِكُونَ بِي شَيْئًا ۚ وَمَن كَفَرَ بَعْدَ ذَٰلِكَ فَأُولَٰئِكَ هُمُ الْفَاسِقُونَ</div>
+          </div>
+          <div class="example-grid">
+            <div class="code-block">
+              <div class="code-label">Example call</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-call-trans')">copy</button>
+              <pre id="ex-call-trans">fetch_translation(
+  surah=24,
+  ayah=55,
+  edition="all"
+)</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">Structured response</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-resp-trans')">copy</button>
+              <pre id="ex-resp-trans">{
+  "surah": 24,
+  "count": 1,
+  "verses": [
+    {
+      "verse_key": "24:55",
+      "surah": 24,
+      "ayah": 55,
+      "arabic": "وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَعَمِلُوا الصَّالِحَاتِ لَيَسْتَخْلِفَنَّهُمْ فِي الْأَرْضِ كَمَا اسْتَخْلَفَ الَّذِينَ مِن قَبْلِهِمْ وَلَيُمَكِّنَنَّ لَهُمْ دِينَهُمُ الَّذِي ارْتَضَىٰ لَهُمْ وَلَيُبَدِّلَنَّهُم مِّن بَعْدِ خَوْفِهِمْ أَمْنًا ۚ يَعْبُدُونَنِي لَا يُشْرِكُونَ بِي شَيْئًا ۚ وَمَن كَفَرَ بَعْدَ ذَٰلِكَ فَأُولَٰئِكَ هُمُ الْفَاسِقُونَ",
+      "translation_jawadi": "اللہ نے تم میں سے صاحبانِ ایمان و عملِ صالح سے وعدہ کیا ہے کہ انہیں زمین میں اسی طرح خلیفہ بنائے گا جس طرح پہلے والوں کو بنایا ہے اور ان کے لئے اس دین کو مضبوط بنائے گا جسے ان کے لئے پسندیدہ قرار دیا ہے اور ان کے خوف کو امن سے تبدیل کردے گا کہ وہ سب صرف میری عبادت کریں گے اور میرے ساتھ کسی طرح کا شرک نہ کریں گے اور اس کے بعد بھی کوئی کافر ہوجائے تو درحقیقت وہی لوگ فاسق اور بدکار ہیں",
+      "translation_balagh": "۵۵۔ تم میں سے جو لوگ ایمان لے آئے ہیں اور نیک اعمال بجا لائے ہیں اللہ نے ان سے وعدہ کر رکھا ہے کہ انہیں زمین میں اس طرح جانشین ضرور بنائے گا جس طرح ان سے پہلوں کو جانشین بنایا...",
+      "translation_namoona": "جو لوگ ایمان لائے ہیں اور اعمال صالح انجام دیتے ہیں ان سے الله کا وعدہ ہے کہ انھیں روئے زمین کی خلافت عطا کرے گا...",
+      "english": "Allah has promised, to those among you who believe and work righteous deeds, that He will, of a surety, grant them in the land, inheritance (of power)..."
+    }
+  ],
+  "grounding_rules": "CRITICAL DISPLAY RULE: Always render the full verbatim 'arabic' verse text (Tanzil Simple v1.1) prominently at the top of your response...",
+  "sources": {
+    "arabic": { "id": "quran-simple", "source": "Tanzil Project" },
+    "jawadi": { "id": "ur.jawadi", "translator": "Syed Zeeshan Haider Jawadi" }
+  }
+}</pre>
+            </div>
+          </div>
+        </details>
+      </article>
+
+      <!-- 3. fetch_tafseer -->
+      <article class="tool-ref" id="fetch_tafseer">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_tafseer">fetch_tafseer</a></h3>
+            <div class="tool-stats">
+              <span class="tool-stat-pill">2 required</span>
+              <span class="tool-stat-pill">1 optional</span>
+            </div>
+          </div>
+          <p class="tool-desc">Fetch comprehensive Shia Quranic Tafseer commentary for a specific verse from <em>Al-Kauthar fi Tafsir al-Quran</em> (Allama Sheikh Mohsin Ali Najafi) and <em>Tafseer e Namoona</em> (Grand Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi), alongside the verbatim Arabic text and all translations.</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Name</th><th>Type</th><th>Status</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>surah</td>
+                  <td>int</td>
+                  <td><span class="badge badge-req">required</span></td>
+                  <td>Surah number (1–114).</td>
+                </tr>
+                <tr>
+                  <td>ayah</td>
+                  <td>int</td>
+                  <td><span class="badge badge-req">required</span></td>
+                  <td>Ayah number within the Surah.</td>
+                </tr>
+                <tr>
+                  <td>source</td>
+                  <td>"all" | "kauthar" | "namoona"</td>
+                  <td><span class="badge badge-opt">optional</span><span class="default-val">default: "all"</span></td>
+                  <td>Tafseer commentary source selector.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>verse_key</td><td>str</td><td>Canonical verse reference (e.g., <code>"24:55"</code>).</td></tr>
+                <tr><td>arabic</td><td>str</td><td>Verbatim Tanzil Simple v1.1 Arabic verse text.</td></tr>
+                <tr><td>tafseer_al_kauthar</td><td>object</td><td>Contains <code>author</code>, <code>source_url</code>, <code>footnotes</code> (Balagh ul Quran hawashi), and full <code>content</code>.</td></tr>
+                <tr><td>tafseer_e_namoona</td><td>object</td><td>Contains <code>author</code>, <code>source_url</code>, <code>translation</code>, and full Urdu/English <code>content</code>.</td></tr>
+                <tr><td>grounding_rules</td><td>str</td><td>Mandatory instruction to always display the verbatim <code>arabic</code> text visibly.</td></tr>
+                <tr><td>sources</td><td>object</td><td>Canonical attribution metadata for Arabic and Jawadi editions.</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+        <details class="example" open>
+          <summary>Example &amp; Rendered Arabic Text (Surah Al-Ma'idah 5:55 — Verse of Wilayah)</summary>
+          <div class="verse-result-box" style="margin-bottom:14px;padding:18px;">
+            <div class="code-label" style="margin-bottom:6px;">Rendered Canonical Arabic Text (Tanzil Simple v1.1 • 5:55)</div>
+            <div class="arabic-text" lang="ar" dir="rtl" style="margin-bottom:0;padding-bottom:0;border-bottom:none;">إِنَّمَا وَلِيُّكُمُ اللَّهُ وَرَسُولُهُ وَالَّذِينَ آمَنُوا الَّذِينَ يُقِيمُونَ الصَّلَاةَ وَيُؤْتُونَ الزَّكَاةَ وَهُمْ رَاكِعُونَ</div>
+          </div>
+          <div class="example-grid">
+            <div class="code-block">
+              <div class="code-label">Example call</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-call-tafseer')">copy</button>
+              <pre id="ex-call-tafseer">fetch_tafseer(
+  surah=5,
+  ayah=55,
+  source="all"
+)</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">Structured response</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-resp-tafseer')">copy</button>
+              <pre id="ex-resp-tafseer">{
+  "verse_key": "5:55",
+  "arabic": "إِنَّمَا وَلِيُّكُمُ اللَّهُ وَرَسُولُهُ وَالَّذِينَ آمَنُوا الَّذِينَ يُقِيمُونَ الصَّلَاةَ وَيُؤْتُونَ الزَّكَاةَ وَهُمْ رَاكِعُونَ",
+  "tafseer_al_kauthar": {
+    "author": "Allama Sheikh Mohsin Ali Najafi",
+    "source_url": "https://www.balaghulquran.com/tafseer.php?sno=5&ano=005055",
+    "footnotes": "55۔ اس آیت کے شان نزول میں شیعہ اور سنی مفسرین متفق ہیں ...",
+    "content": "۵۵۔ تمہارا ولی تو صرف اللہ ہے اور اس کا رسول اور وہ مومنین ..."
+  },
+  "tafseer_e_namoona": {
+    "author": "Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi",
+    "source_url": "https://www.tafseerenamoona.net/surahs/5#ayah-55",
+    "content": "### شانِ نزول\nبہت سے شیعہ اور سنی مفسرین و محدثین نے نقل کیا ہے ..."
+  },
+  "grounding_rules": "CRITICAL DISPLAY RULE: Always render the full verbatim 'arabic' verse text (Tanzil Simple v1.1) prominently at the top of your response..."
+}</pre>
+            </div>
+          </div>
+        </details>
+      </article>
+
+      <!-- 4. search_verses -->
+      <article class="tool-ref" id="search_verses">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#search_verses">search_verses</a></h3>
+            <div class="tool-stats">
+              <span class="tool-stat-pill">1 required</span>
+              <span class="tool-stat-pill">1 optional</span>
+            </div>
+          </div>
+          <p class="tool-desc">Search across all 6,236 verses by Arabic phrase (diacritics-insensitive and Alef-normalized, matching whether harakat/tashkeel are included or omitted), Urdu translations (Jawadi, Balagh, Namoona), English translations, footnotes, and Tafseer commentary.</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Name</th><th>Type</th><th>Status</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>query</td>
+                  <td>str</td>
+                  <td><span class="badge badge-req">required</span></td>
+                  <td>Search keyword or phrase in Arabic (with or without harakat), Urdu, or English.</td>
+                </tr>
+                <tr>
+                  <td>edition</td>
+                  <td>"all" | "jawadi" | "balagh" | "namoona"</td>
+                  <td><span class="badge badge-opt">optional</span><span class="default-val">default: "all"</span></td>
+                  <td>Filter search scope to a specific translation edition or search all editions.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>query</td><td>str</td><td>Echo of the executed search query.</td></tr>
+                <tr><td>match_count</td><td>int</td><td>Number of matching verses returned (up to 20).</td></tr>
+                <tr><td>matches</td><td>list[object]</td><td>Matching verse objects with <code>verse_key</code>, <code>arabic</code>, <code>jawadi</code>, <code>balagh</code>, <code>namoona</code>, and <code>english</code>.</td></tr>
+                <tr><td>grounding_rules</td><td>str</td><td>Mandatory instruction to always display the verbatim <code>arabic</code> text visibly.</td></tr>
+                <tr><td>sources</td><td>object</td><td>Attribution metadata for Arabic and Jawadi texts.</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+        <details class="example" open>
+          <summary>Example &amp; Rendered Arabic Match (Unvocalized Arabic Query → Full Vocalized Verse)</summary>
+          <div class="verse-result-box" style="margin-bottom:14px;padding:18px;">
+            <div class="code-label" style="margin-bottom:6px;">Rendered Matched Arabic Verse (Tanzil Simple v1.1 • 24:55)</div>
+            <div class="arabic-text" lang="ar" dir="rtl" style="margin-bottom:0;padding-bottom:0;border-bottom:none;">وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَعَمِلُوا الصَّالِحَاتِ لَيَسْتَخْلِفَنَّهُمْ فِي الْأَرْضِ كَمَا اسْتَخْلَفَ الَّذِينَ مِن قَبْلِهِمْ وَلَيُمَكِّنَنَّ لَهُمْ دِينَهُمُ الَّذِي ارْتَضَىٰ لَهُمْ وَلَيُبَدِّلَنَّهُم مِّن بَعْدِ خَوْفِهِمْ أَمْنًا ۚ يَعْبُدُونَنِي لَا يُشْرِكُونَ بِي شَيْئًا ۚ وَمَن كَفَرَ بَعْدَ ذَٰلِكَ فَأُولَٰئِكَ هُمُ الْفَاسِقُونَ</div>
+          </div>
+          <div class="example-grid">
+            <div class="code-block">
+              <div class="code-label">Example call</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-call-search')">copy</button>
+              <pre id="ex-call-search">search_verses(
+  query="ليستخلفنهم في الارض",
+  edition="all"
+)</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">Structured response</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-resp-search')">copy</button>
+              <pre id="ex-resp-search">{
+  "query": "ليستخلفنهم في الارض",
+  "match_count": 1,
+  "matches": [
+    {
+      "verse_key": "24:55",
+      "arabic": "وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَعَمِلُوا الصَّالِحَاتِ لَيَسْتَخْلِفَنَّهُمْ فِي الْأَرْضِ كَمَا اسْتَخْلَفَ الَّذِينَ مِن قَبْلِهِمْ وَلَيُمَكِّنَنَّ لَهُمْ دِينَهُمُ الَّذِي ارْتَضَىٰ لَهُمْ وَلَيُبَدِّلَنَّهُم مِّن بَعْدِ خَوْفِهِمْ أَمْنًا ۚ يَعْبُدُونَنِي لَا يُشْرِكُونَ بِي شَيْئًا ۚ وَمَن كَفَرَ بَعْدَ ذَٰلِكَ فَأُولَٰئِكَ هُمُ الْفَاسِقُونَ",
+      "jawadi": "اللہ نے تم میں سے صاحبانِ ایمان و عملِ صالح سے وعدہ کیا ہے ...",
+      "balagh": "۵۵۔ تم میں سے جو لوگ ایمان لے آئے ہیں اور نیک اعمال بجا لائے ہیں ...",
+      "namoona": "جو لوگ ایمان لائے ہیں اور اعمال صالح انجام دیتے ہیں ...",
+      "english": "Allah has promised, to those among you who believe and work righteous deeds..."
+    }
+  ],
+  "grounding_rules": "CRITICAL DISPLAY RULE: Always render the full verbatim 'arabic' verse text (Tanzil Simple v1.1) prominently at the top of your response..."
+}</pre>
+            </div>
+          </div>
+        </details>
+      </article>
+
+      <!-- GROUP 2: Grounding & Discovery -->
+      <div class="group-header" id="grounding-and-discovery">
+        <h3>Grounding &amp; Structural Discovery</h3>
+        <p>Session initialization, canonical grounding rules, edition discovery, and Surah structural metadata.</p>
+      </div>
+
+      <!-- 4. list_editions -->
+      <article class="tool-ref" id="list_editions">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#list_editions">list_editions</a></h3>
+            <div class="tool-stats">
+              <span class="tool-stat-pill">0 required</span>
+              <span class="tool-stat-pill">1 optional</span>
+            </div>
+          </div>
+          <p class="tool-desc">Discovery tool for edition identifiers. Lets the caller inspect all available Quran Arabic text, Urdu/English translation, and Shia Tafseer commentary editions with author, language, and license metadata.</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Name</th><th>Type</th><th>Status</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>edition_type</td>
+                  <td>"all" | "quran" | "translation" | "tafseer"</td>
+                  <td><span class="badge badge-opt">optional</span><span class="default-val">default: "all"</span></td>
+                  <td>Filter returned editions by category.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>count</td><td>int</td><td>Number of editions returned.</td></tr>
+                <tr><td>edition_type</td><td>str</td><td>Applied filter category.</td></tr>
+                <tr><td>editions</td><td>list[object]</td><td>Edition descriptors with <code>edition_id</code>, <code>edition_type</code>, <code>lang</code>, <code>name</code>, <code>author</code>, <code>source_url</code>, and <code>license</code>.</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+        <details class="example">
+          <summary>Example</summary>
+          <div class="example-grid">
+            <div class="code-block">
+              <div class="code-label">Example call</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-call-editions')">copy</button>
+              <pre id="ex-call-editions">list_editions(
+  edition_type="all"
+)</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">Structured response</div>
+              <button class="copy-code-btn" onclick="copySnippet('ex-resp-editions')">copy</button>
+              <pre id="ex-resp-editions">{
+  "count": 7,
+  "edition_type": "all",
+  "editions": [
+    {
+      "edition_id": "quran-simple",
+      "edition_type": "quran",
+      "lang": "ar",
+      "name": "Tanzil Quran Text (Simple, Version 1.1)",
+      "author": "Tanzil Project"
+    },
+    {
+      "edition_id": "ur.jawadi",
+      "edition_type": "translation",
+      "lang": "ur",
+      "name": "ترجمہ علامہ سید ذیشان حیدر جوادی",
+      "author": "Allama Syed Zeeshan Haider Jawadi"
+    }
+  ]
+}</pre>
+            </div>
+          </div>
+        </details>
+      </article>
+
+      <!-- 5. fetch_grounding_rules -->
+      <article class="tool-ref" id="fetch_grounding_rules">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_grounding_rules">fetch_grounding_rules</a></h3>
+            <div class="tool-stats">
+              <span class="tool-stat-pill">0 required</span>
+              <span class="tool-stat-pill">0 optional</span>
+            </div>
+          </div>
+          <p class="tool-desc">Returns the canonical grounding rules for quoting Arabic Quranic text, translations, and Shia Tafseer commentaries without fabrication or distortion.</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <p style="font-size:12.5px;color:var(--text-muted);">None.</p>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>grounding_rules</td><td>str</td><td>Markdown grounding instructions for verbatim Arabic quoting and scholarly attribution.</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </article>
+
+      <!-- 6. list_surahs -->
+      <article class="tool-ref" id="list_surahs">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#list_surahs">list_surahs</a></h3>
+            <div class="tool-stats">
+              <span class="tool-stat-pill">0 required</span>
+              <span class="tool-stat-pill">0 optional</span>
+            </div>
+          </div>
+          <p class="tool-desc">Lists all 114 Surahs of the Holy Quran with Surah number, Arabic name, English name, and canonical verse (ayah) count.</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <p style="font-size:12.5px;color:var(--text-muted);">None.</p>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>count</td><td>int</td><td>Total Surahs returned (114).</td></tr>
+                <tr><td>surahs</td><td>list[object]</td><td>List of Surah metadata objects (<code>surah</code>, <code>name_ar</code>, <code>name_en</code>, <code>ayah_count</code>).</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </article>
+
+      <!-- SUPPORTED EDITIONS CATALOGUE (#editions) -->
+      <div class="group-header" id="editions" style="margin-top:42px;">
+        <h3>Supported Editions <a href="#editions" style="color:var(--gold);text-decoration:none;font-size:15px;">#</a></h3>
+        <p>Click any <code>edition_id</code> pill to copy it for deterministic control over translation and Tafseer selection.</p>
+      </div>
 
       <table class="tools-table">
         <thead>
           <tr>
-            <th>Tool Name</th>
-            <th>Parameters</th>
-            <th>Description</th>
+            <th>Edition ID</th>
+            <th>Category</th>
+            <th>Name</th>
+            <th>Scholar / Author</th>
+            <th>Lang</th>
+            <th>Source &amp; License</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><code>fetch_translation</code></td>
-            <td><code>surah</code> (1–114), <code>ayah</code> (optional int), <code>edition</code> ("all" | "balagh" | "namoona" | "jawadi")</td>
-            <td>Returns Arabic text with Allama Jawadi (<a href="https://tanzil.net/trans/ur.jawadi" target="_blank" style="color:var(--cyan);">Tanzil.net</a>), Balagh ul Quran (Sheikh Mohsin Ali Najafi), Tafseer e Namoona (Safdar Najfi), English translations, and footnotes.</td>
+            <td><span class="edition-pill" onclick="copyText('quran-simple')" title="Click to copy">quran-simple</span></td>
+            <td>Quran Text</td>
+            <td>Tanzil Quran Text (Simple, v1.1)</td>
+            <td>Tanzil Project</td>
+            <td><code>ar</code></td>
+            <td><a href="https://tanzil.net" target="_blank" style="color:var(--cyan);">Tanzil.net</a> (CC BY 3.0 Verbatim)</td>
           </tr>
           <tr>
-            <td><code>fetch_tafseer</code></td>
-            <td><code>surah</code> (1–114), <code>ayah</code> (int), <code>source</code> ("kauthar" | "namoona" | "all")</td>
-            <td>Fetches detailed scholarly commentary from <em>Al-Kauthar fi Tafsir al-Quran</em> and <em>Tafseer e Namoona</em>.</td>
+            <td><span class="edition-pill" onclick="copyText('jawadi')" title="Click to copy">jawadi</span></td>
+            <td>Translation</td>
+            <td>ترجمہ علامہ سید ذیشان حیدر جوادی (<code>ur.jawadi</code>)</td>
+            <td>Allama Syed Zeeshan Haider Jawadi</td>
+            <td><code>ur</code></td>
+            <td><a href="https://tanzil.net/trans/ur.jawadi" target="_blank" style="color:var(--cyan);">Tanzil.net</a> (CC BY-NC-ND 3.0)</td>
           </tr>
           <tr>
-            <td><code>search_verses</code></td>
-            <td><code>query</code> (str), <code>edition</code> ("all" | "balagh" | "namoona" | "jawadi")</td>
-            <td>Full-text search across Arabic text, Urdu/English translations (including Allama Jawadi), footnotes, and Tafseer commentary across all 114 Surahs.</td>
+            <td><span class="edition-pill" onclick="copyText('balagh')" title="Click to copy">balagh</span></td>
+            <td>Translation &amp; Hawashi</td>
+            <td>بلاغ القرآن (Balagh ul Quran)</td>
+            <td>Allama Sheikh Mohsin Ali Najafi</td>
+            <td><code>ur</code></td>
+            <td><a href="https://www.balaghulquran.com" target="_blank" style="color:var(--cyan);">balaghulquran.com</a></td>
           </tr>
           <tr>
-            <td><code>list_surahs</code></td>
-            <td><em>none</em></td>
-            <td>Lists all 114 Surahs with Arabic name, English name, and canonical verse count.</td>
+            <td><span class="edition-pill" onclick="copyText('namoona')" title="Click to copy">namoona</span></td>
+            <td>Translation</td>
+            <td>ترجمہ تفسیر نمونہ</td>
+            <td>Maulana Syed Safdar Hussain Najafi</td>
+            <td><code>ur</code></td>
+            <td><a href="https://www.tafseerenamoona.net" target="_blank" style="color:var(--cyan);">tafseerenamoona.net</a></td>
+          </tr>
+          <tr>
+            <td><span class="edition-pill" onclick="copyText('kauthar')" title="Click to copy">kauthar</span></td>
+            <td>Tafseer</td>
+            <td>الکوثر فی تفسیر القرآن (Tafseer al-Kauthar)</td>
+            <td>Allama Sheikh Mohsin Ali Najafi</td>
+            <td><code>ur</code></td>
+            <td><a href="https://www.balaghulquran.com" target="_blank" style="color:var(--cyan);">balaghulquran.com</a></td>
+          </tr>
+          <tr>
+            <td><span class="edition-pill" onclick="copyText('namoona')" title="Click to copy">namoona</span></td>
+            <td>Tafseer</td>
+            <td>تفسیر نمونہ (Tafseer e Namoona)</td>
+            <td>Grand Ayatollah Naser Makarem Shirazi</td>
+            <td><code>ur / en</code></td>
+            <td><a href="https://www.tafseerenamoona.net" target="_blank" style="color:var(--cyan);">tafseerenamoona.net</a></td>
           </tr>
         </tbody>
       </table>
-      <p style="margin-top:16px;font-size:12.5px;color:var(--text-muted);">
-        <strong>Attribution &amp; Terms:</strong> Allama Syed Zeeshan Haider Jawadi's Urdu translation (<code>ur.jawadi</code>) is provided verbatim from <a href="https://tanzil.net/trans/ur.jawadi" target="_blank" style="color:var(--gold-light);">Tanzil.net</a> under <a href="https://tanzil.net/trans/" target="_blank" style="color:var(--gold-light);">CC BY-NC-ND 3.0</a> (non-commercial use only with attribution).
-      </p>
+
+      <!-- TROUBLESHOOTING (#troubleshooting) -->
+      <div class="group-header" id="troubleshooting" style="margin-top:42px;">
+        <h3>Troubleshooting <a href="#troubleshooting" style="color:var(--gold);text-decoration:none;font-size:15px;">#</a></h3>
+        <p>Common setup, connection, and grounding verification checks across AI clients.</p>
+      </div>
+      <div class="troubleshoot-grid">
+        <div class="troubleshoot-card">
+          <h4>Server naming &amp; invocation</h4>
+          <p>Use <code>quran-shia</code> as the server name and <code>https://quran-shia-mcp.onrender.com/mcp</code> as the hosted Streamable HTTP endpoint. No API key or OAuth login is required.</p>
+        </div>
+        <div class="troubleshoot-card">
+          <h4>Ensuring Arabic text is always visible</h4>
+          <p>Every tool response embeds <code>grounding_rules</code> instructing the model to display the verbatim Tanzil Simple v1.1 <code>arabic</code> text at the top of its response. You can also call <code>fetch_quran</code> directly.</p>
+        </div>
+        <div class="troubleshoot-card">
+          <h4>Claude Web Connector sign-in prompt</h4>
+          <p>Because this server is open and requires no OAuth login, if Claude Web shows <em>"Couldn't determine how this server signs in"</em>, click <strong>Continue anyway</strong> and leave auth set to <strong>None</strong>.</p>
+        </div>
+        <div class="troubleshoot-card">
+          <h4>Did it use retrieved sources?</h4>
+          <p>Look for tool invocations such as <code>fetch_quran</code>, <code>fetch_translation</code>, <code>fetch_tafseer</code>, or <code>search_verses</code>. Ask the assistant to cite the exact <code>verse_key</code> and scholarly author.</p>
+        </div>
+        <div class="troubleshoot-card">
+          <h4>Selecting a specific translation or Tafseer</h4>
+          <p>Pass <code>edition="jawadi"</code>, <code>"balagh"</code>, or <code>"namoona"</code> to <code>fetch_translation</code>, or pass <code>source="kauthar"</code> or <code>"namoona"</code> to <code>fetch_tafseer</code>. Call <code>list_editions()</code> to inspect all IDs.</p>
+        </div>
+        <div class="troubleshoot-card">
+          <h4>Render free-tier wake-up</h4>
+          <p>If the hosted instance on Render has been idle, the very first request may take 15–30 seconds to wake the container. Once warm, all 6,236 verses are served from local SQLite in under 50ms.</p>
+        </div>
+      </div>
+
+      <!-- NOTES & LICENSING (#notes) -->
+      <div class="group-header" id="notes" style="margin-top:42px;">
+        <h3>Sources, Licensing &amp; Notes <a href="#notes" style="color:var(--gold);text-decoration:none;font-size:15px;">#</a></h3>
+      </div>
+      <ul class="notes-list">
+        <li><strong>Verbatim Arabic Text</strong> Canonical Quranic Arabic is served from <strong>Tanzil Simple v1.1</strong> (<code>quran-simple</code>, <a href="https://tanzil.net" target="_blank" style="color:var(--cyan);">Tanzil.net</a>) under CC BY 3.0. Modifying or paraphrasing the Arabic text is strictly prohibited.</li>
+        <li><strong>Allama Jawadi Urdu Translation</strong> Provided verbatim from <a href="https://tanzil.net/trans/ur.jawadi" target="_blank" style="color:var(--cyan);">Tanzil.net (ur.jawadi)</a> under CC BY-NC-ND 3.0 for non-commercial scholarly use with full attribution.</li>
+        <li><strong>Classical Shia Tafseer Corpus</strong> Combines <em>Balagh ul Quran &amp; Tafseer al-Kauthar</em> by Allama Sheikh Mohsin Ali Najafi (<a href="https://www.balaghulquran.com" target="_blank" style="color:var(--cyan);">balaghulquran.com</a>) and <em>Tafseer e Namoona</em> by Grand Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi (<a href="https://www.tafseerenamoona.net" target="_blank" style="color:var(--cyan);">tafseerenamoona.net</a>).</li>
+        <li><strong>Diacritics-Insensitive Arabic Search</strong> <code>search_verses</code> uses SQLite custom normalization (<code>NORM_AR</code>) so Arabic queries match accurately whether typed with full tashkeel/harakat or plain unvocalized letters.</li>
+        <li><strong>Release Profile</strong> This documentation describes the <strong>v1.2.0</strong> public tool profile for <a href="https://quran-shia-mcp.onrender.com/documentation" style="color:var(--gold-light);">quran-shia-mcp.onrender.com</a> (<a href="https://github.com/szaidi-code/quran-shia-mcp" target="_blank" style="color:var(--cyan);">GitHub Repository</a>).</li>
+      </ul>
     </div>
   </div>
 </div>
@@ -665,15 +1821,42 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
     if (target) target.style.display = 'block';
   }
 
+  function handleHashRouting() {
+    const hash = (window.location.hash || '').replace(/^#/, '');
+    if (!hash && window.location.pathname.startsWith('/documentation')) {
+      activateTab('tools');
+      return;
+    }
+    if (!hash) return;
+    const toolHashes = new Set([
+      'setup-and-connect', 'setup-at-a-glance', 'usage-examples', 'troubleshooting', 'notes',
+      'available-tools', 'tools', 'editions', 'search-and-retrieval', 'grounding-and-discovery',
+      'fetch_quran', 'fetch_translation', 'fetch_tafseer', 'search_verses', 'list_surahs', 'list_editions', 'fetch_grounding_rules'
+    ]);
+    if (toolHashes.has(hash)) {
+      activateTab('tools');
+    } else if (hash === 'setup-claude' || hash === 'claude') {
+      activateTab('claude');
+    } else if (hash === 'setup-chatgpt' || hash === 'chatgpt') {
+      activateTab('chatgpt');
+    } else if (hash === 'setup-antigravity' || hash === 'antigravity') {
+      activateTab('antigravity');
+    }
+    requestAnimationFrame(() => {
+      const el = document.getElementById(hash);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   function copyText(text) {
     navigator.clipboard.writeText(text);
-    alert('Copied endpoint URL to clipboard: ' + text);
+    alert('Copied to clipboard: ' + text);
   }
 
   function copySnippet(id) {
     const text = document.getElementById(id).innerText;
     navigator.clipboard.writeText(text);
-    alert('Configuration snippet copied to clipboard!');
+    alert('Snippet copied to clipboard!');
   }
 
   async function mcpCall(toolName, args) {
@@ -730,20 +1913,20 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
       out.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <span style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;">Verse ${escapeHtml(res.verse_key)}</span>
-          <span style="color:var(--text-muted);font-size:12px;">Live MCP Response</span>
+          <span style="color:var(--text-muted);font-size:12px;">Live MCP Response • Tanzil Simple v1.1</span>
         </div>
-        <div class="arabic-text">${escapeHtml(res.arabic)}</div>
+        <div class="arabic-text" lang="ar" dir="rtl">${escapeHtml(res.arabic)}</div>
         <div style="margin-bottom:12px;">
           <div class="tafseer-badge">Allama Syed Zeeshan Haider Jawadi (Tanzil.net)</div>
-          <div class="urdu-text">${escapeHtml(res.translation_jawadi)}</div>
+          <div class="urdu-text" lang="ur" dir="rtl">${escapeHtml(res.translation_jawadi)}</div>
         </div>
         <div style="margin-bottom:12px;">
           <div class="tafseer-badge">Balagh ul Quran (Allama Sheikh Mohsin Ali Najafi)</div>
-          <div class="urdu-text">${escapeHtml(res.translation_balagh)}</div>
+          <div class="urdu-text" lang="ur" dir="rtl">${escapeHtml(res.translation_balagh)}</div>
         </div>
         <div style="margin-bottom:12px;">
           <div class="tafseer-badge">Tafseer e Namoona Translation (Maulana Syed Safdar Hussain Najafi)</div>
-          <div class="urdu-text">${escapeHtml(res.translation_namoona)}</div>
+          <div class="urdu-text" lang="ur" dir="rtl">${escapeHtml(res.translation_namoona)}</div>
         </div>
         <div style="margin-bottom:12px;">
           <div class="tafseer-badge">English Translation</div>
@@ -764,6 +1947,8 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
   }
 
   async function initPortal() {
+    handleHashRouting();
+    window.addEventListener('hashchange', handleHashRouting);
     try {
       const h = await fetch('/health').then(r => r.json());
       if (h?.database?.surahs) {
