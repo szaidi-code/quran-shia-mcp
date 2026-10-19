@@ -1,0 +1,48 @@
+name: CI & Render Auto-Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify database sync & 7 MCP tools
+        run: |
+          python3 builder.py
+          python3 -c '
+          import server
+          res_q = server.execute_tool("fetch_quran", {"surah": 24, "ayah": 55})
+          assert res_q["count"] == 1 and len(res_q["verses"][0]["arabic"]) > 50
+          res_t = server.execute_tool("fetch_translation", {"surah": 2, "ayah": 282, "edition": "all"})
+          assert not res_t["verses"][0]["arabic"].startswith("$")
+          res_s = server.execute_tool("search_verses", {"query": "ليستخلفنهم في الارض", "edition": "all"})
+          assert res_s["match_count"] >= 1
+          res_e = server.execute_tool("list_editions", {"edition_type": "all"})
+          assert res_e["count"] == 7
+          print("All 7 MCP tools and canonical Tanzil Arabic verified!")
+          '
+
+      - name: Trigger Render Deploy Hook (if configured)
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "Triggering Render deployment via Deploy Hook..."
+            curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL"
+            echo ""
+            echo "Render deployment triggered successfully!"
+          else
+            echo "::notice::RENDER_DEPLOY_HOOK_URL secret is not set. If Render GitHub App auto-deploy is not linked, add RENDER_DEPLOY_HOOK_URL in GitHub Settings > Secrets > Actions."
+          fi
