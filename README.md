@@ -1,6 +1,8 @@
-# Shia Quran & Tafseer MCP Server (`v1.2.0`)
+# Shia Quran & Tafseer MCP Server (`v1.3.0`)
 
-A high-performance Model Context Protocol (MCP) server providing the **complete 114 Surahs (6,236 verses)** of the Holy Quran with **verbatim Tanzil Simple v1.1 Arabic text**, verified Urdu & English translations, explanatory footnotes (*hawashi*), and classical Shia Tafseer commentary.
+A high-performance Model Context Protocol (MCP) server providing the **complete 114 Surahs (6,236 verses)** of the Holy Quran with **verbatim Tanzil Simple v1.1 Arabic text**, verified Urdu & English translations, explanatory footnotes (*hawashi*), classical Shia Tafseer commentary, Arabic word morphology/paradigm/concordance tools, interactive Mushaf study, and structural metadata (including Ja‘fari *wājib* vs *mustaḥabb* Sajdah rulings).
+
+Implements **100% of the 14-tool suite documented at [`mcp.quran.ai/documentation#available-tools`](https://mcp.quran.ai/documentation#available-tools)** plus **3 classic Shia Quran MCP tools** (**17 tools total across 5 groups**).
 
 - **Hosted MCP Endpoint (Streamable HTTP & SSE):** `https://quran-shia-mcp.onrender.com/mcp`
 - **Interactive Explorer & Documentation Portal:** [`https://quran-shia-mcp.onrender.com/documentation`](https://quran-shia-mcp.onrender.com/documentation)
@@ -18,93 +20,45 @@ A high-performance Model Context Protocol (MCP) server providing the **complete 
 | `namoona` | Translation | **ترجمہ تفسیر نمونہ** | Maulana Syed Safdar Hussain Najafi | Urdu (`ur`) | [tafseerenamoona.net](https://www.tafseerenamoona.net) |
 | `en.yusufali-shakir` | Translation | **English Translation** | Abdullah Yusuf Ali & M. H. Shakir | English (`en`) | [tafseerenamoona.net](https://www.tafseerenamoona.net) |
 | `kauthar` | Tafseer | **الکوثر فی تفسیر القرآن (Tafseer al-Kauthar)** | Allama Sheikh Mohsin Ali Najafi | Urdu (`ur`) | [balaghulquran.com](https://www.balaghulquran.com) |
-| `namoona` | Tafseer | **تفسیر نمونہ (Tafseer e Namoona)** | Grand Ayatollah Naser Makarem Shirazi | Urdu / English | [tafseerenamoona.net](https://www.tafseerenamoona.net) |
+| `namoona-tafseer` | Tafseer | **تفسیر نمونہ (Tafseer e Namoona)** | Grand Ayatollah Naser Makarem Shirazi | Urdu / English | [tafseerenamoona.net](https://www.tafseerenamoona.net) |
 
 ---
 
-## Quick Setup: Connect Your AI Client
+## Tool Reference (`#available-tools` — 17 Tools Across 5 Groups)
 
-### 1. Antigravity, Claude Desktop, or Cursor IDE (`mcp_config.json`)
-Add the following block to your MCP configuration (`~/.gemini/config/mcp_config.json`, `claude_desktop_config.json`, or Cursor MCP settings):
+### Group 1: Grounding and Setup (`#grounding-setup`)
+| Tool | Parameters | Description |
+| :--- | :--- | :--- |
+| **`fetch_grounding_rules`** | *none* | Returns canonical grounding rules requiring verbatim Arabic quoting and scholarly attribution, plus a `grounding_nonce`. |
+| **`list_editions`** | `edition_type` (`"all"` \| `"quran"` \| `"tafsir"` \| `"tafseer"` \| `"translation"` \| list), `lang` (opt) | Discover available Quran Arabic text, Urdu/English translation, and Shia Tafseer commentary editions. |
 
-```json
-{
-  "mcpServers": {
-    "quran-shia": {
-      "url": "https://quran-shia-mcp.onrender.com/mcp"
-    }
-  }
-}
-```
+### Group 2: Search and Retrieval (`#search-and-retrieval`)
+| Tool | Parameters | Description |
+| :--- | :--- | :--- |
+| **`fetch_quran`** | `ayahs` (str/list, e.g. `"2:255"`, `"26:88-89"`), `surah`, `ayah`, `editions`, `continuation`, `grounding_nonce` | Fetch canonical verbatim Tanzil Simple v1.1 Arabic text (`quran-simple`) by single verse, range, multi-range, or Surah. |
+| **`search_quran`** | `query`, `surah`, `translations`, `intent`, `continuation`, `grounding_nonce` | Search semantically and lexically across Quran Arabic text (diacritics-insensitive) with Shia translations attached. |
+| **`fetch_tafsir`** | `ayahs` (str/list), `surah`, `ayah`, `editions` / `source` (`"all"` \| `"kauthar"` \| `"namoona"`), `continuation`, `grounding_nonce` | Fetch full Shia Tafsir blocks (*Tafseer al-Kauthar* & *Tafseer e Namoona*, auto-resolving grouped Namoona ranges) for single verses, ranges, or lists. |
+| **`fetch_tafseer`** | `surah`, `ayah`, `ayahs`, `source` (`"all"` \| `"kauthar"` \| `"namoona"`) | Classic Shia MCP alias for `fetch_tafsir`. |
+| **`search_tafsir`** | `query`, `editions`, `surah`, `ayahs`, `include_ayah_text`, `intent`, `continuation`, `grounding_nonce` | Search Shia commentary content (*Al-Kauthar*, *Balagh* footnotes, and *Tafseer e Namoona*) by topic or phrase. |
+| **`fetch_translation`** | `ayahs` (str/list), `surah`, `ayah`, `editions` / `edition` (`"all"` \| `"jawadi"` \| `"balagh"` \| `"namoona"` \| `"en"` \| `"ur"`) | Fetch verbatim Tanzil Arabic text with Jawadi, Balagh ul Quran, Namoona, and English translations. |
+| **`search_translation`** | `query`, `surah`, `editions`, `intent`, `continuation`, `grounding_nonce` | Search translation text directly across Jawadi, Balagh, Namoona, and English editions. |
+| **`search_verses`** | `query` (req), `edition` (`"all"` \| `"jawadi"` \| `"balagh"` \| `"namoona"`), `surah` (opt) | Diacritics-insensitive Arabic (`NORM_AR`) and full-text Urdu/English translation & commentary search. |
 
-### 2. Claude Web Connectors (Pro / Team)
-1. Go to **Settings > Connectors > Add custom connector**.
-2. Set **Name** to `Shia Quran & Tafseer` and **URL** to `https://quran-shia-mcp.onrender.com/mcp`.
-3. *Note:* Because this is a public server requiring no OAuth login, if Claude displays *"Couldn't determine how this server signs in"*, click **Continue anyway** and leave authentication set to **None**.
+### Group 3: Word Study (`#word-study`)
+| Tool | Parameters | Description |
+| :--- | :--- | :--- |
+| **`fetch_word_morphology`** | `ayah_key`, `word`, `word_position`, `word_text` | Inspect a Quranic word at the segment, grammar, root, lemma, and stem level with Shia verse translation context. |
+| **`fetch_word_paradigm`** | `ayah_key`, `lemma`, `root`, `word_position`, `word_text` | Explore a Quranic word's derivational family across perfect, imperfect, and imperative stems and candidate lemmas. |
+| **`fetch_word_concordance`** | `ayah_key`, `word`, `root`, `lemma`, `stem`, `word_position`, `word_text`, `match_by`, `group_by`, `page`, `page_size`, `rerank_from`, `continuation` | Find related occurrences by exact stem, lemma, or root, enriched with canonical Tanzil Arabic and Shia translations. |
 
-### 3. ChatGPT (Developer MCP / Custom GPT Actions)
-1. In ChatGPT Developer Mode / Connectors, add `https://quran-shia-mcp.onrender.com/mcp` with Authentication set to **None**.
+### Group 4: Apps & Interactive Reader (`#apps`)
+| Tool | Parameters | Description |
+| :--- | :--- | :--- |
+| **`interactive_study`** | `page` (1–604), `surah` (1–114), `ayah`, `juz` (1–30), `context_id`, `continuation_selection`, `render_mode`, `resume` | Open the 604-page Mushaf reader state together with `shia_study_verses` (translations & Tafseer URLs for every verse on the page). |
+| **`resolve_reader_link`** | `ayahs` (req, e.g. `"3:37-38"`), `phrase` (opt), `reader_target` (opt) | Create a verified reader link to an ayah, range, or exact Arabic phrase with word-span coordinates and direct Shia Tafseer links. |
 
----
-
-## How to Use: Your First Study Session
-
-Once connected, ask your AI assistant questions by **Surah:Ayah reference**, **Arabic phrase** (with or without diacritics), or **theological topic**. Every tool response embeds `grounding_rules` instructing the AI assistant to **always render the full verbatim Arabic verse text (`arabic`) visibly at the top of its response**.
-
-### Example Prompts to Try
-
-1. **Classical Shia Exegesis (Ayat al-Istikhlaf — 24:55):**
-   > *"Give me the Tafseer of Ayat al-Istikhlaf (Surah An-Nur 24:55) with the Arabic verse and Urdu/English translations."*
-   - Calls `fetch_tafseer(surah=24, ayah=55, source="all")`
-   - Displays the verbatim Tanzil Arabic verse:
-     > وَعَدَ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَعَمِلُوا الصَّالِحَاتِ لَيَسْتَخْلِفَنَّهُمْ فِي الْأَرْضِ كَمَا اسْتَخْلَفَ الَّذِينَ مِن قَبْلِهِمْ وَلَيُمَكِّنَنَّ لَهُمْ دِينَهُمُ الَّذِي ارْتَضَىٰ لَهُمْ وَلَيُبَدِّلَنَّهُم مِّن بَعْدِ خَوْفِهِمْ أَمْنًا ۚ يَعْبُدُونَنِي لَا يُشْرِكُونَ بِي شَيْئًا ۚ وَمَن كَفَرَ بَعْدَ ذَٰلِكَ فَأُولَٰئِكَ هُمُ الْفَاسِقُونَ
-   - Summarizes commentary from *Tafseer e Namoona* and *Tafseer al-Kauthar* (including narrations from the Ahlulbayt (a.s.) regarding the universal government of Imam al-Mahdi a.s.).
-
-2. **Comparative Scholarly Translation (Verse of Wilayah — 5:55):**
-   > *"Compare Allama Jawadi, Balagh ul Quran, and Tafseer e Namoona on Surah Al-Ma'idah 5:55 and explain its Shan-e-Nuzool."*
-   - Calls `fetch_translation(surah=5, ayah=55, edition="all")` and `fetch_tafseer(surah=5, ayah=55, source="all")`.
-
-3. **Diacritics-Insensitive Arabic Search (Verse of Tatheer — 33:33):**
-   > *"Search the Quran for 'ليذهب عنكم الرجس اهل البيت' and show the full vocalized Arabic verse and translations."*
-   - Calls `search_verses(query="ليذهب عنكم الرجس اهل البيت", edition="all")` using custom Arabic normalization (`NORM_AR`).
-
----
-
-## Tool Reference (`#available-tools`)
-
-7 documented MCP tools across 2 ordered groups:
-
-### Group 1: Search & Retrieval
-
-| Tool | Parameters | Status | Description |
-| :--- | :--- | :--- | :--- |
-| **`fetch_quran`** | `surah` (int, req), `ayah` (int, opt), `ayahs` (str, opt) | 1 req · 2 opt | Fetch canonical verbatim Tanzil Simple v1.1 Arabic text (`quran-simple`) by Surah, Ayah, or Ayah range (e.g. `"24:55"` or `"2:255-257"`). |
-| **`fetch_translation`** | `surah` (int, req), `ayah` (int, opt), `edition` (`"all"` \| `"jawadi"` \| `"balagh"` \| `"namoona"`) | 1 req · 2 opt | Fetch verbatim Tanzil Simple v1.1 Arabic text with Urdu and English translations, Balagh footnotes, and Tanzil attribution. |
-| **`fetch_tafseer`** | `surah` (int, req), `ayah` (int, req), `source` (`"all"` \| `"kauthar"` \| `"namoona"`) | 2 req · 1 opt | Fetch verbatim Arabic text, translations, and full classical Shia Tafseer commentaries from *Al-Kauthar* and *Tafseer e Namoona*. |
-| **`search_verses`** | `query` (str, req), `edition` (`"all"` \| `"jawadi"` \| `"balagh"` \| `"namoona"`) | 1 req · 1 opt | Diacritics-insensitive & Alef-normalized Arabic search (`NORM_AR`) plus full-text search across translations, footnotes, and commentary. |
-
-### Group 2: Grounding & Structural Discovery
-
-| Tool | Parameters | Status | Description |
-| :--- | :--- | :--- | :--- |
-| **`list_editions`** | `edition_type` (`"all"` \| `"quran"` \| `"translation"` \| `"tafseer"`) | 0 req · 1 opt | Discover available Quran Arabic text, Urdu/English translation, and Shia Tafseer commentary editions with author and license metadata. |
-| **`fetch_grounding_rules`** | *none* | 0 req · 0 opt | Retrieve canonical grounding rules requiring verbatim Arabic quoting and explicit scholarly attribution. |
-| **`list_surahs`** | *none* | 0 req · 0 opt | List all 114 Surahs with Arabic name, English name, and canonical verse count. |
-
----
-
-## Licensing & Attribution (Tanzil.net)
-
-- **Canonical Arabic Text (`quran-simple` v1.1):** Provided verbatim from the **[Tanzil Project](https://tanzil.net)** (`data/tanzil/quran-simple.sql`) under **Creative Commons Attribution 3.0** (verbatim copy; changing text is not allowed).
-- **Allama Syed Zeeshan Haider Jawadi Urdu Translation (`ur.jawadi`):** Provided verbatim from **[Tanzil.net](https://tanzil.net/trans/ur.jawadi)** (`data/tanzil/ur.jawadi.txt`) under **Creative Commons Attribution-NonCommercial-NoDerivs 3.0** ([Tanzil Translation Terms](https://tanzil.net/trans/)).
-
----
-
-## Architecture & Deployment on Render
-
-- **Fast & Self-Contained:** Backed by a pre-indexed relational SQLite database (`quran_shia.db`) and verified Tanzil corpus (`data/tanzil/`) containing all **114 Surahs** and **6,236 verses**. Zero external Python runtime dependencies.
-- **Endpoints:**
-  - `GET /` or `GET /documentation` — Interactive 114-Surah Verse & Tafseer Explorer + Setup & Tool Reference Documentation Portal.
-  - `GET /health` — Health check endpoint (`version: "1.2.0"`).
-  - `POST /mcp` — Standard Streamable HTTP JSON-RPC 2.0 MCP protocol endpoint.
-  - `GET /sse` — Server-Sent Events (SSE) stream endpoint for remote MCP clients.
+### Group 5: Utilities & Structural Metadata (`#utilities`)
+| Tool | Parameters | Description |
+| :--- | :--- | :--- |
+| **`fetch_quran_metadata`** | `surah`, `ayah`, `juz` (1–30), `page` (1–604), `hizb` (1–60), `ruku` (1–558), `manzil` (1–7) | Fetch structural metadata including Sajdah verses with explicit Ja‘fari rulings (*wājib* obligatory in 32:15, 41:37–38, 53:62, 96:19 vs *mustaḥabb*). |
+| **`list_surahs`** | *none* | List all 114 Surahs with Arabic name, English name, and canonical verse count. |

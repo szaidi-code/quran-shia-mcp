@@ -829,7 +829,7 @@
 <nav class="nav-header">
   <a href="/" class="nav-brand">
     <span>SHIA QURAN MCP</span>
-    <span class="nav-badge" id="status-badge">v1.2.0 • 114 Surahs Live</span>
+    <span class="nav-badge" id="status-badge">v1.3.0 • 114 Surahs • 17 Tools Live</span>
   </a>
   <div class="nav-links">
     <a onclick="activateTab('explorer')">Live Explorer</a>
@@ -854,7 +854,7 @@
   <div class="stats-row">
     <div class="stat-pill">Surahs Indexed: <strong id="stat-surahs">114 / 114</strong></div>
     <div class="stat-pill">Verses Indexed: <strong id="stat-verses">6,236</strong></div>
-    <div class="stat-pill">Documented Tools: <strong>7 Tools</strong></div>
+    <div class="stat-pill">Documented Tools: <strong>17 Tools (5 Groups)</strong></div>
     <div class="stat-pill">Editions: <strong>Tanzil Arabic • Jawadi • Balagh • Namoona</strong></div>
   </div>
 
@@ -1095,7 +1095,7 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
 
     <div class="guide-card" id="available-tools">
       <h2>Tool Reference <a href="#available-tools" style="color:var(--gold);text-decoration:none;font-size:16px;">#</a></h2>
-      <p>7 documented tools across 2 ordered groups. Each reference includes the real parameter schema, response shape, rendered canonical Arabic verse output, and structured example contracts served by v1.2.0.</p>
+      <p>17 documented tools across 5 ordered groups (including the full 14-tool suite from mcp.quran.ai plus 3 classic Shia Quran MCP tools). Each reference includes the parameter schema, response shape, rendered canonical Arabic verse output, and structured example contracts served by v1.3.0.</p>
 
       <!-- Quick Overview Grid -->
       <div class="tool-overview-grid">
@@ -1144,9 +1144,79 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
         <a class="tool-overview-card" href="#fetch_grounding_rules" onclick="activateTab('tools')">
           <div>
             <div class="tool-overview-name">fetch_grounding_rules</div>
-            <div class="tool-overview-summary">Retrieve canonical grounding rules for verbatim Quranic quoting and scholarly attribution.</div>
+            <div class="tool-overview-summary">Retrieve canonical grounding rules and grounding_nonce for verbatim Quranic quoting.</div>
           </div>
           <div class="tool-overview-meta">0 required · 0 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#search_quran" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">search_quran</div>
+            <div class="tool-overview-summary">Semantic &amp; lexical search across Quran Arabic text with Shia translations attached.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 6 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#fetch_tafsir" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_tafsir</div>
+            <div class="tool-overview-summary">Fetch full Shia Tafsir blocks (Al-Kauthar &amp; Namoona) for single ayahs, ranges, or lists.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 5 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#search_tafsir" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">search_tafsir</div>
+            <div class="tool-overview-summary">Search thematic &amp; lexical Shia commentary content across Al-Kauthar and Tafseer e Namoona.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 8 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#search_translation" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">search_translation</div>
+            <div class="tool-overview-summary">Search translation text directly across Jawadi, Balagh, Namoona, and English editions.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 6 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#fetch_word_morphology" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_word_morphology</div>
+            <div class="tool-overview-summary">Inspect a Quranic word at the segment, grammar, root, lemma, and stem level with Shia verse context.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 4 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#fetch_word_paradigm" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_word_paradigm</div>
+            <div class="tool-overview-summary">Explore a Quranic word's derivational family across perfect, imperfect, and imperative stems.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 5 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#fetch_word_concordance" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_word_concordance</div>
+            <div class="tool-overview-summary">Find related occurrences by root, lemma, or stem enriched with Shia translations.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 13 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#interactive_study" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">interactive_study</div>
+            <div class="tool-overview-summary">Open the 604-page Mushaf interactive study reader enriched with Shia translations and Tafseer links.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 8 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#resolve_reader_link" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">resolve_reader_link</div>
+            <div class="tool-overview-summary">Create a verified reader link to an ayah, range, or exact Arabic phrase with word-span coordinates.</div>
+          </div>
+          <div class="tool-overview-meta">1 required · 2 optional</div>
+        </a>
+        <a class="tool-overview-card" href="#fetch_quran_metadata" onclick="activateTab('tools')">
+          <div>
+            <div class="tool-overview-name">fetch_quran_metadata</div>
+            <div class="tool-overview-summary">Fetch structural metadata for surah, ayah, juz, page, hizb, ruku, manzil, and Ja'fari Sajdah rulings.</div>
+          </div>
+          <div class="tool-overview-meta">0 required · 7 optional</div>
         </a>
       </div>
 
@@ -1693,6 +1763,179 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
         </div>
       </article>
 
+      <!-- ADDITIONAL SEARCH & RETRIEVAL TOOLS (mcp.quran.ai parity) -->
+      <article class="tool-ref" id="search_quran">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#search_quran">search_quran</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">6 optional</span></div>
+          </div>
+          <p class="tool-desc">Search semantically and lexically across Quran Arabic text (diacritics-insensitive) with optional Shia and English translations attached (<code>jawadi</code>, <code>balagh</code>, <code>namoona</code>, <code>en</code>).</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <table class="field-table">
+              <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>query</td><td>str</td><td><span class="badge badge-opt">optional</span></td><td>Search query in Arabic, Urdu, or English.</td></tr>
+                <tr><td>surah</td><td>int | null</td><td><span class="badge badge-opt">optional</span></td><td>Optional Surah number (1–114) filter.</td></tr>
+                <tr><td>translations</td><td>str | list</td><td><span class="badge badge-opt">optional</span></td><td><code>"auto"</code>, <code>"all"</code>, <code>"jawadi"</code>, <code>"balagh"</code>, <code>"namoona"</code>, or <code>"en"</code>.</td></tr>
+                <tr><td>intent</td><td>str | null</td><td><span class="badge badge-opt">optional</span></td><td>Optional search intent label.</td></tr>
+                <tr><td>continuation</td><td>str | null</td><td><span class="badge badge-opt">optional</span></td><td>Optional pagination continuation token.</td></tr>
+                <tr><td>grounding_nonce</td><td>str | null</td><td><span class="badge badge-opt">optional</span></td><td>Optional grounding acknowledgment nonce.</td></tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>query</td><td>str</td><td>Executed search query.</td></tr>
+                <tr><td>results</td><td>list[object]</td><td>Ranked matches with <code>ayah_key</code>, <code>arabic</code>, <code>translations</code>, and <code>citation_url</code>.</td></tr>
+                <tr><td>total_found</td><td>int</td><td>Total matching verses returned.</td></tr>
+                <tr><td>pagination</td><td>object</td><td>Pagination metadata.</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </article>
+
+      <article class="tool-ref" id="fetch_tafsir">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_tafsir">fetch_tafsir</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">5 optional</span></div>
+          </div>
+          <p class="tool-desc">Fetch full Shia Tafsir blocks (<em>Tafseer al-Kauthar</em> and <em>Tafseer e Namoona</em>, with automatic resolution of grouped Namoona commentary ranges) for single ayahs (<code>"26:89"</code>), ranges (<code>"26:88-89"</code>), or multi-ayah lists.</p>
+        </header>
+        <div class="tool-panel-grid">
+          <section class="panel-card">
+            <h4 class="panel-heading">Parameters</h4>
+            <table class="field-table">
+              <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>ayahs</td><td>str | list</td><td><span class="badge badge-opt">optional</span></td><td>Verse reference(s): <code>"26:89"</code>, <code>"26:88-89"</code>, or list.</td></tr>
+                <tr><td>editions</td><td>str | list</td><td><span class="badge badge-opt">optional</span></td><td><code>"all"</code>, <code>"kauthar"</code>, or <code>"namoona"</code>.</td></tr>
+                <tr><td>surah / ayah</td><td>int | null</td><td><span class="badge badge-opt">optional</span></td><td>Alternative Surah/Ayah integers.</td></tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="panel-card">
+            <h4 class="panel-heading">Response shape</h4>
+            <table class="field-table">
+              <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>ayahs</td><td>list[str]</td><td>Resolved verse keys.</td></tr>
+                <tr><td>arabic</td><td>str</td><td>Verbatim Tanzil Simple v1.1 Arabic text.</td></tr>
+                <tr><td>tafseer_al_kauthar</td><td>object</td><td>Full commentary and footnotes by Allama Sheikh Mohsin Ali Najafi.</td></tr>
+                <tr><td>tafseer_e_namoona</td><td>object</td><td>Full commentary by Grand Ayatollah Naser Makarem Shirazi.</td></tr>
+                <tr><td>results</td><td>object</td><td>Tafsir blocks keyed by edition identifier.</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </article>
+
+      <article class="tool-ref" id="search_tafsir">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#search_tafsir">search_tafsir</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">8 optional</span></div>
+          </div>
+          <p class="tool-desc">Search Shia commentary content across <em>Tafseer al-Kauthar</em>, <em>Balagh ul Quran</em> footnotes, and <em>Tafseer e Namoona</em> by topic or phrase, with optional <code>surah</code> or <code>ayahs</code> scope filtering.</p>
+        </header>
+      </article>
+
+      <article class="tool-ref" id="search_translation">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#search_translation">search_translation</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">6 optional</span></div>
+          </div>
+          <p class="tool-desc">Search translation text directly across Allama Jawadi (<code>ur.jawadi</code>), Balagh ul Quran, Tafseer e Namoona, and English translations with edition and Surah filtering.</p>
+        </header>
+      </article>
+
+      <!-- GROUP 3: Word Study (#word-study) -->
+      <div class="group-header" id="word-study">
+        <h3>Word Study (Morphology, Paradigm &amp; Concordance)</h3>
+        <p>Inspect Quranic words at the segment, grammar, root, lemma, verb paradigm, and concordance level enriched with Shia translations.</p>
+      </div>
+
+      <article class="tool-ref" id="fetch_word_morphology">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_word_morphology">fetch_word_morphology</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">4 optional</span></div>
+          </div>
+          <p class="tool-desc">Inspect a Quranic word at the segment and grammar level (<code>ayah_key</code>, <code>word_position</code>, <code>word_text</code>, or <code>word</code>). Returns root, lemma, stem, frequencies, grammatical features, morpheme segments, verbatim Arabic text, and Shia translations for the verse.</p>
+        </header>
+      </article>
+
+      <article class="tool-ref" id="fetch_word_paradigm">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_word_paradigm">fetch_word_paradigm</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">5 optional</span></div>
+          </div>
+          <p class="tool-desc">Move from one Quranic word (<code>ayah_key</code> + <code>word_position</code>/<code>word_text</code>), <code>lemma</code>, or <code>root</code> to its derivational family across perfect, imperfect, and imperative stems and candidate lemmas.</p>
+        </header>
+      </article>
+
+      <article class="tool-ref" id="fetch_word_concordance">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_word_concordance">fetch_word_concordance</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">13 optional</span></div>
+          </div>
+          <p class="tool-desc">Find related occurrences across the Quran by exact stem, lemma, or root, enriched with canonical Tanzil Simple v1.1 Arabic text and Shia translations (Jawadi, Balagh ul Quran, Tafseer e Namoona, and English).</p>
+        </header>
+      </article>
+
+      <!-- GROUP 4: Apps & Reader (#apps) -->
+      <div class="group-header" id="apps">
+        <h3>Interactive Study &amp; Reader Links</h3>
+        <p>Open the 604-page Mushaf reader state or generate verified word-span deep links alongside Shia Tafseer URLs.</p>
+      </div>
+
+      <article class="tool-ref" id="interactive_study">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#interactive_study">interactive_study</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">8 optional</span></div>
+          </div>
+          <p class="tool-desc">Open the interactive Quran study reader at a <code>page</code> (1–604), <code>juz</code> (1–30), <code>surah</code> (1–114), or <code>ayah</code> location, returning the Mushaf lines/words plus <code>shia_study_verses</code> with full translations and Tafseer links.</p>
+        </header>
+      </article>
+
+      <article class="tool-ref" id="resolve_reader_link">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#resolve_reader_link">resolve_reader_link</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">1 required</span><span class="tool-stat-pill">2 optional</span></div>
+          </div>
+          <p class="tool-desc">Create a verified reader link to an ayah, same-surah range (<code>"3:37-38"</code>), or exact Arabic phrase (<code>"كُلَّمَا دَخَلَ عَلَيۡهَا"</code>), resolving word coordinates and direct links to <em>Tafseer al-Kauthar</em> and <em>Tafseer e Namoona</em>.</p>
+        </header>
+      </article>
+
+      <!-- GROUP 5: Utilities (#utilities) -->
+      <div class="group-header" id="utilities">
+        <h3>Utilities &amp; Structural Metadata</h3>
+        <p>Fixed-shape structural metadata for Surah, Ayah, Juz, Page, Hizb, Ruku, Manzil, and Ja'fari Sajdah rulings.</p>
+      </div>
+
+      <article class="tool-ref" id="fetch_quran_metadata">
+        <header class="tool-ref-header">
+          <div class="tool-ref-title">
+            <h3><a href="#fetch_quran_metadata">fetch_quran_metadata</a></h3>
+            <div class="tool-stats"><span class="tool-stat-pill">0 required</span><span class="tool-stat-pill">7 optional</span></div>
+          </div>
+          <p class="tool-desc">Fetch structural metadata for <code>surah</code>, <code>ayah</code>, <code>juz</code> (1–30), <code>page</code> (1–604), <code>hizb</code> (1–60), <code>ruku</code> (1–558), or <code>manzil</code> (1–7), including Sajdah verses with explicit Ja'fari jurisprudence rulings (distinguishing the 4 obligatory <em>wajib</em> prostrations in 32:15, 41:37–38, 53:62, and 96:19 from recommended <em>mustahabb</em> prostrations).</p>
+        </header>
+      </article>
+
       <!-- SUPPORTED EDITIONS CATALOGUE (#editions) -->
       <div class="group-header" id="editions" style="margin-top:42px;">
         <h3>Supported Editions <a href="#editions" style="color:var(--gold);text-decoration:none;font-size:15px;">#</a></h3>
@@ -1803,7 +2046,7 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
         <li><strong>Allama Jawadi Urdu Translation</strong> Provided verbatim from <a href="https://tanzil.net/trans/ur.jawadi" target="_blank" style="color:var(--cyan);">Tanzil.net (ur.jawadi)</a> under CC BY-NC-ND 3.0 for non-commercial scholarly use with full attribution.</li>
         <li><strong>Classical Shia Tafseer Corpus</strong> Combines <em>Balagh ul Quran &amp; Tafseer al-Kauthar</em> by Allama Sheikh Mohsin Ali Najafi (<a href="https://www.balaghulquran.com" target="_blank" style="color:var(--cyan);">balaghulquran.com</a>) and <em>Tafseer e Namoona</em> by Grand Ayatollah Naser Makarem Shirazi / Maulana Syed Safdar Hussain Najafi (<a href="https://www.tafseerenamoona.net" target="_blank" style="color:var(--cyan);">tafseerenamoona.net</a>).</li>
         <li><strong>Diacritics-Insensitive Arabic Search</strong> <code>search_verses</code> uses SQLite custom normalization (<code>NORM_AR</code>) so Arabic queries match accurately whether typed with full tashkeel/harakat or plain unvocalized letters.</li>
-        <li><strong>Release Profile</strong> This documentation describes the <strong>v1.2.0</strong> public tool profile for <a href="https://quran-shia-mcp.onrender.com/documentation" style="color:var(--gold-light);">quran-shia-mcp.onrender.com</a> (<a href="https://github.com/szaidi-code/quran-shia-mcp" target="_blank" style="color:var(--cyan);">GitHub Repository</a>).</li>
+        <li><strong>Release Profile</strong> This documentation describes the <strong>v1.3.0</strong> public tool profile for <a href="https://quran-shia-mcp.onrender.com/documentation" style="color:var(--gold-light);">quran-shia-mcp.onrender.com</a> (<a href="https://github.com/szaidi-code/quran-shia-mcp" target="_blank" style="color:var(--cyan);">GitHub Repository</a>).</li>
       </ul>
     </div>
   </div>
@@ -1831,7 +2074,7 @@ URL:  https://quran-shia-mcp.onrender.com/mcp</pre>
     const toolHashes = new Set([
       'setup-and-connect', 'setup-at-a-glance', 'usage-examples', 'troubleshooting', 'notes',
       'available-tools', 'tools', 'editions', 'search-and-retrieval', 'grounding-and-discovery',
-      'fetch_quran', 'fetch_translation', 'fetch_tafseer', 'search_verses', 'list_surahs', 'list_editions', 'fetch_grounding_rules'
+      'fetch_quran', 'search_quran', 'fetch_tafsir', 'fetch_tafseer', 'search_tafsir', 'fetch_translation', 'search_translation', 'search_verses', 'fetch_word_morphology', 'fetch_word_paradigm', 'fetch_word_concordance', 'interactive_study', 'resolve_reader_link', 'fetch_quran_metadata', 'list_surahs', 'list_editions', 'fetch_grounding_rules', 'grounding-setup', 'word-study', 'apps', 'utilities'
     ]);
     if (toolHashes.has(hash)) {
       activateTab('tools');
